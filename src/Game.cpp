@@ -20,7 +20,7 @@ void Game::GameLoop() {
 
     while (isRunning) {
 
-        while (SDL_WaitEvent(&event)) {
+        while (SDL_PollEvent(&event)) {
 
             if (event.type == SDL_QUIT) {
                 isRunning = false;

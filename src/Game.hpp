@@ -14,6 +14,7 @@ class Game {
 
     private:
         GUI gui;
+
         bool isRunning;
 
 };
