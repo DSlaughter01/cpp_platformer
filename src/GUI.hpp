@@ -11,10 +11,11 @@ class GUI {
     public:
         GUI();
         ~GUI();
+        void LoadBackAndMiddle();
         void PopulateIDToFilenameMap();
-        void LoadTexture(const std::string &filename);
-        void LoadTextures();
-        void RenderScreen(SystemManager &sm);
+
+        void LoadEntityTextures();
+        void RenderScreen(SystemManager &systemManager);
 
     private:
 
@@ -23,8 +24,11 @@ class GUI {
         SDL_Window* window;
         SDL_Renderer* renderer;
 
-        std::map<short int, std::string> IDToFilenameMap;
-        std::vector<SDL_Texture*> textureVector;
+        SDL_Texture* backgroundTex;
+        SDL_Texture* middleTex;
 
         SDL_Rect backgroundDest;
+
+        std::map<short int, std::string> IDToFilenameMap;
+        std::vector<SDL_Texture*> entityTextureVector;
 };

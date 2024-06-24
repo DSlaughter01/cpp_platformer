@@ -21,8 +21,9 @@ GUI::GUI() :
 
     renderer = SDL_CreateRenderer(window, -1, 0); 
 
+    LoadBackAndMiddle();
     PopulateIDToFilenameMap();
-    LoadTextures();
+    LoadEntityTextures();
 
     backgroundDest = {0, 0, windowWidth, windowHeight};
 }
@@ -30,9 +31,12 @@ GUI::GUI() :
 
 GUI::~GUI() {
 
-    for (auto &i: textureVector) {
+    for (auto &i: entityTextureVector) {
         SDL_DestroyTexture(i);
     }
+
+    SDL_DestroyTexture(backgroundTex);
+    SDL_DestroyTexture(middleTex);
 
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
@@ -41,45 +45,52 @@ GUI::~GUI() {
     IMG_Quit();
 }
 
+
+void GUI::LoadBackAndMiddle() {
+
+    SDL_Surface* backSurf = IMG_Load("assets/back.png");
+    backgroundTex = SDL_CreateTextureFromSurface(renderer, backSurf);
+    SDL_FreeSurface(backSurf);
+
+    SDL_Surface* midSurf = IMG_Load("assets/middle.png");
+    middleTex = SDL_CreateTextureFromSurface(renderer, midSurf);
+    SDL_FreeSurface(midSurf);
+}
+
 void GUI::PopulateIDToFilenameMap() {
 
     IDToFilenameMap.clear();
 
     std::vector<std::string> textureFilenames = {
-        "assets/tiles/alone_floor.png",
         "assets/spritesheets/sprite_still.png",
-        "assets/back.png",
-        "assets/middle.png",
+        "assets/tiles/alone_floor.png",
         "assets/tiles/tiles.png"
     };
 
-    for (int i = 0; i < textureFilenames.size(); i++) {
-        IDToFilenameMap[i] = textureFilenames[i];
-    }
-}
-
-void GUI::LoadTexture(const std::string &filename) {
-
-    SDL_Surface* imgSurf = IMG_Load(filename.c_str());
-    SDL_Texture* imgTex = SDL_CreateTextureFromSurface(renderer, imgSurf);
-    SDL_FreeSurface(imgSurf);
-
-    textureVector.emplace_back(imgTex);
+    for (int i = 0; i < textureFilenames.size(); i++)
+        IDToFilenameMap[i] = textureFilenames[i]; 
 }
 
 
-void GUI::LoadTextures() {
+void GUI::LoadEntityTextures() {
 
     for (auto &file : IDToFilenameMap) {
-        LoadTexture(file.second);
+        
+        SDL_Surface* imgSurf = IMG_Load(file.second.c_str());
+        SDL_Texture* imgTex = SDL_CreateTextureFromSurface(renderer, imgSurf);
+        SDL_FreeSurface(imgSurf);
+
+        entityTextureVector.emplace_back(imgTex);
     }
 }
 
 
-
-void GUI::RenderScreen(SystemManager &sm) {
+void GUI::RenderScreen(SystemManager &systemManager) {
 
     SDL_RenderClear(renderer);
-    sm.Draw(renderer, textureVector);
+    
+    SDL_RenderCopy(renderer, backgroundTex, NULL, &backgroundDest);
+    SDL_RenderCopy(renderer, middleTex, NULL, &backgroundDest);
+    systemManager.Draw(renderer, entityTextureVector);
     SDL_RenderPresent(renderer);
 }

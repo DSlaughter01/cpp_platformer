@@ -71,7 +71,7 @@ void EntityManager::AddComponent(Entity e, std::shared_ptr<Component> component)
     }
 
     // Update the bitset in m_entities
-    m_entityComponentBitset[e] |= (1ULL << component->componentID);
+    m_entityComponentBitset[e].set(component->componentID);
 
     // Add component 
     entityComponentMap[e][component->componentID] = component;  
@@ -89,7 +89,7 @@ std::shared_ptr<Component> EntityManager::GetComponentAtIndex(Entity e, short in
     if (!HasComponent(e, componentID)) {
         std::cerr << "Entity " << e << " does not have component " << componentID << "." << std::endl;
         return nullptr;
-    }          
+    }
 
     else {
         // Get the correct component

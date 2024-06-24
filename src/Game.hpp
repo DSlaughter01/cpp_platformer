@@ -2,6 +2,7 @@
 #include "EntityManager.hpp"
 #include "GUI.hpp"
 #include "SystemManager.hpp"
+#include <fstream>
 
 class Game {
 
@@ -10,9 +11,10 @@ class Game {
         ~Game();
 
         void GameLoop();
-        void CreateEntity();
 
     private:
+        void LoadTilemap();
+        void LoadPlayer();
 
     public:
 
@@ -21,6 +23,7 @@ class Game {
         EntityManager entityManager;
         SystemManager systemManager = SystemManager(entityManager);
 
+        int desiredFrameTicks = 1000 / 60;
         bool isRunning;
 
 };

@@ -1,0 +1,2 @@
+Remove magic numbers (e.g. put tile_dim)
+Things are getting a bit confusing re. how to know which file is being rendered? Right now it is dependent on me knowing how I coded it, which is probably not good design

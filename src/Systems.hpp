@@ -29,6 +29,5 @@ class MovementSystem : public System {
         void Update() override;
 
     private:
-
         EntityManager &entityManager;
 };

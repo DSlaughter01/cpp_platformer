@@ -6,7 +6,7 @@ struct Transform {
         x(fx), y(fy), w(fw), h(fh) {
             rect = {fx, fy, fw, fh};
         }
-    float x, y, w, h;
+    int x, y, w, h;
     SDL_Rect rect;
 };
 
@@ -33,7 +33,8 @@ struct Component {
 
 struct CTag : public Component {
 
-    CTag() : Component(ComponentID::cTagID) {}
+    CTag(short int tag) : Component(ComponentID::cTagID), m_tag(tag) {}
+
     short int m_tag;
 };
 
@@ -41,23 +42,30 @@ struct CSpritesheet : public Component {
 
     CSpritesheet(short int spritesheet) :
         Component(ComponentID::cSpritesheetID), m_spritesheetID(spritesheet) {}
+
     short int m_spritesheetID; 
 };
 
 struct CTransform : public Component {
-    CTransform(float x, float y, float w, float h) :
+
+    CTransform(int x, int y, int w, int h) :
         Component(ComponentID::cTransformID), m_transform(x, y, w, h) {}
+
     Transform m_transform;
 };
 
 struct CDimensions : public Component {
+
     CDimensions(int x, int y) :
         Component(ComponentID::cDimensionsID), m_dimensions(x, y) {}
+
     Dimensions m_dimensions;
 };
 
 struct CVelocity : public Component {
+
     CVelocity(int x, int y) :
         Component(ComponentID::cVelocityID), m_velocity(x, y) {}
+
     Velocity m_velocity;
 };

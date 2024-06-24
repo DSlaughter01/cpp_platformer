@@ -7,7 +7,6 @@ class SystemManager {
 
     private:
         EntityManager &entityManager;
-
         MovementSystem movementSystem = MovementSystem(entityManager);
         RenderSystem renderSystem = RenderSystem(entityManager);
 
