@@ -3,17 +3,18 @@
 #include "SDL2/SDL_image.h"
 #include <map>
 #include <string>
-
+#include <vector> 
+#include "SystemManager.hpp"
 
 class GUI {
 
     public:
         GUI();
         ~GUI();
-        void LoadTexture(std::string filename);
+        void PopulateIDToFilenameMap();
+        void LoadTexture(const std::string &filename);
         void LoadTextures();
-        void RenderEntities();
-        void RenderScreen();
+        void RenderScreen(SystemManager &sm);
 
     private:
 
@@ -22,7 +23,8 @@ class GUI {
         SDL_Window* window;
         SDL_Renderer* renderer;
 
-        std::map<std::string, SDL_Texture*> filenameToTextureMap;
+        std::map<short int, std::string> IDToFilenameMap;
+        std::vector<SDL_Texture*> textureVector;
 
         SDL_Rect backgroundDest;
 };
