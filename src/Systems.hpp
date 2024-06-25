@@ -30,7 +30,7 @@ class RenderSystem : public System {
         RenderSystem(EntityManager &em) : entityManager(em) {}
         
         void Update() override {}
-        void Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVector);
+        void Update(SDL_Renderer* ren, std::set<Entity> &renderSet, std::vector<SDL_Texture*> &textureVector);
     
     private:
         EntityManager &entityManager;
@@ -41,7 +41,8 @@ class MovementSystem : public System {
 
     public:
         MovementSystem(EntityManager &em) : entityManager(em) {}
-        void Update() override;
+        void Update() override {}
+        void Update(std::set<Entity> &moveSet);
 
     private:
         EntityManager &entityManager;

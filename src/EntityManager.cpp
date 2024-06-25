@@ -76,11 +76,26 @@ void EntityManager::AddComponent(Entity e, std::shared_ptr<Component> component)
         return;
     }
 
-    // Update the bitset in m_entities
     m_entityComponentBitset[e].set(component->componentID);
-
-    // Add component 
     entityComponentMap[e][component->componentID] = component;  
+}
+
+
+void EntityManager::CheckSystems(Entity e) {
+
+    // RenderSystem
+    if (renderEntities.find(e) == renderEntities.end() &&
+    HasComponent(e, ComponentID::cSpritesheetID) &&
+    HasComponent(e, ComponentID::cTransformID)) {
+        renderEntities.emplace(e);
+    }
+
+    // MovementSystem
+    if (moveEntities.find(e) == moveEntities.end() &&
+    HasComponent(e, ComponentID::cTransformID) &&
+    HasComponent(e, ComponentID::cVelocityID)) { // This may need changing when offsets come into play
+        moveEntities.emplace(e);
+    }
 }
 
 

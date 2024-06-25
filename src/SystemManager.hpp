@@ -14,10 +14,10 @@ class SystemManager {
     public:
         void Update(const Uint8* currentKeyboardState) {
             eventSystem.Update(currentKeyboardState);
-            movementSystem.Update();
+            movementSystem.Update(entityManager.moveEntities);
         }
 
         void Draw(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVector) {
-            renderSystem.Update(ren, textureVector);
+            renderSystem.Update(ren, entityManager.renderEntities, textureVector);
         }
 };

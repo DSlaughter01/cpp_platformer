@@ -28,6 +28,8 @@ void Game::LoadPlayer() {
     entityManager.AddComponent(e, std::make_shared<CVelocity>(velocity));  
 
     entityManager.SetPlayerEntity(e);
+
+    entityManager.CheckSystems(e);
 }
 
 
@@ -59,6 +61,9 @@ void Game::LoadTilemap() {
 
                     CSpritesheet spritesheet(currentLine[i] - '0');
                     entityManager.AddComponent(e, std::make_shared<CSpritesheet>(spritesheet));
+
+                    // Add entity to the relevant system sets
+                    entityManager.CheckSystems(e);
                 }
             }
             line++;
