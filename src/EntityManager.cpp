@@ -1,11 +1,12 @@
 #include "EntityManager.hpp"
+#include "Variables.hpp"
 
 
 EntityManager::EntityManager() {
 
     // Initialise availableEntityIDs
     availableEntityIDs = {};
-    for (Entity e = 0; e < MAX_ENTITIES; e++) 
+    for (Entity e = 0; e < World::maxEntities; e++) 
         availableEntityIDs.push(e);
 
     // Initialise m_entities
@@ -24,7 +25,7 @@ Entity EntityManager::CreateEntity() {
 
     if (availableEntityIDs.empty()) {
         std::cerr << "No more entities left!!!" << std::endl;
-        return MAX_ENTITIES - 1;
+        return World::maxEntities - 1;
     }
 
     // Get an available entity ID
@@ -40,13 +41,19 @@ Entity EntityManager::CreateEntity() {
     return e;
 }
 
+
+void EntityManager::SetPlayerEntity(Entity e) {
+
+    playerEntity = e;
+}
+
 void EntityManager::RemoveEntity(Entity e) {
 
     // Add the entity back onto the available entities queue
     availableEntityIDs.push(e);
 
     // Reset its bitset
-    m_entityComponentBitset[e] = 0ULL;   
+    m_entityComponentBitset[e].reset();   
 
     // Signify removal in m_entities
     m_entities[e] = false;
@@ -64,8 +71,7 @@ void EntityManager::AddComponent(Entity e, std::shared_ptr<Component> component)
     }
 
     // See if a component of that type has already been added
-    std::shared_ptr<Component> thisEntity = entityComponentMap[e][component->componentID];
-    if (thisEntity) {
+    if (entityComponentMap[e][component->componentID]) {
         std::cout << "Entity " << e << " already has component " << component->componentID << "." << std::endl;
         return;
     }

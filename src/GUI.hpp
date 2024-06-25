@@ -5,6 +5,8 @@
 #include <string>
 #include <vector> 
 #include "SystemManager.hpp"
+#include "Variables.hpp"
+
 
 class GUI {
 

@@ -2,20 +2,25 @@
 #include "SDL2/SDL.h"
 
 struct Transform {
+
     Transform(int fx, int fy, int fw, int fh) :
-        x(fx), y(fy), w(fw), h(fh) {
-            rect = {fx, fy, fw, fh};
-        }
+        x(fx), y(fy), w(fw), h(fh) {rect = {fx, fy, fw, fh};}
+
     int x, y, w, h;
     SDL_Rect rect;
 };
 
 struct Dimensions {
+
     Dimensions(int fx, int fy) : x(fx), y(fy) {}
+
     int x, y;
 };
+
 struct Velocity {
+
     Velocity(int fx, int fy) : dx(fx), dy(fy) {}
+
     int dx, dy;
 };
 
@@ -25,7 +30,7 @@ namespace ComponentID {
 }
 
 struct Component {
-    // Add a virtual destructor to make polymorphic, allowing dyamic_cast
+    // Virtual destructor to make polymorphic, allowing dyamic_cast
     Component(short int id) : componentID(id) {}
     virtual ~Component() = default;
     short int componentID;

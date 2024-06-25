@@ -1,7 +1,30 @@
 #include "Systems.hpp"
 
+void EventSystem::Update(const Uint8* currentKeyboardState) {
+
+    std::shared_ptr<CVelocity> vel = std::dynamic_pointer_cast<CVelocity>(entityManager.GetComponentAtIndex(entityManager.playerEntity, ComponentID::cVelocityID));
+
+    // Player moves horizontally
+    if (currentKeyboardState[SDL_SCANCODE_LEFT]) 
+        vel->m_velocity.dx = -Player::maxDX;
+    else if (currentKeyboardState[SDL_SCANCODE_RIGHT]) 
+        vel->m_velocity.dx = Player::maxDX;
+    else 
+        vel->m_velocity.dx = 0;
+
+    // Player jumps (or falls)
+    if (currentKeyboardState[SDL_SCANCODE_SPACE])
+        vel->m_velocity.dy = Player::jumpDY;
+    else {
+        if (vel->m_velocity.dy < Player::maxFallDY) 
+            vel->m_velocity.dy += World::gravity;
+    }
+}
+
+
 void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVector) {
-    for (Entity e = 0; e < MAX_ENTITIES; e++) {
+
+    for (Entity e = 0; e < World::maxEntities; e++) {
 
         if (entityManager.HasComponent(e, ComponentID::cSpritesheetID) &&
         entityManager.HasComponent(e, ComponentID::cTransformID)) {
@@ -19,7 +42,7 @@ void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureV
 
 void MovementSystem::Update() {
 
-    for (Entity e = 0; e < MAX_ENTITIES; e++) {
+    for (Entity e = 0; e < World::maxEntities; e++) {
 
         if (entityManager.HasComponent(e, ComponentID::cVelocityID) &&
         entityManager.HasComponent(e, ComponentID::cTransformID)) {
@@ -33,10 +56,8 @@ void MovementSystem::Update() {
             pos->m_transform.y += vel->m_velocity.dy;
 
             // Update entity rectangle
-            pos->m_transform.rect = {pos->m_transform.x, 
-                                     pos->m_transform.y, 
-                                     pos->m_transform.w, 
-                                     pos->m_transform.h};
+            pos->m_transform.rect.x += vel->m_velocity.dx;
+            pos->m_transform.rect.y += vel->m_velocity.dy;
         }
     }
 }

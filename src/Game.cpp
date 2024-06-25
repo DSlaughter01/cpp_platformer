@@ -18,14 +18,16 @@ void Game::LoadPlayer() {
 
     Entity e = entityManager.CreateEntity();
    
-    CTransform transform(64, 64, 64, 64);
+    CTransform transform(64, 64, Player::w, Player::h);
     entityManager.AddComponent(e, std::make_shared<CTransform>(transform));
 
     CSpritesheet spritesheet(0);
     entityManager.AddComponent(e, std::make_shared<CSpritesheet>(spritesheet));
 
-    CVelocity velocity(1, 0);
+    CVelocity velocity(0, 0);
     entityManager.AddComponent(e, std::make_shared<CVelocity>(velocity));  
+
+    entityManager.SetPlayerEntity(e);
 }
 
 
@@ -52,7 +54,7 @@ void Game::LoadTilemap() {
 
                     Entity e = entityManager.CreateEntity();
 
-                    CTransform transform(x, y, 64, 64);
+                    CTransform transform(x, y, World::tileDim, World::tileDim);
                     entityManager.AddComponent(e, std::make_shared<CTransform>(transform));
 
                     CSpritesheet spritesheet(currentLine[i] - '0');
@@ -70,8 +72,11 @@ void Game::GameLoop() {
 
     SDL_Event event;
     uint64_t frameStart, frameEnd;
+
     LoadTilemap();
     LoadPlayer();
+
+    const Uint8 *currentKeyboardState = SDL_GetKeyboardState(NULL);
 
     while (isRunning) {
 
@@ -85,12 +90,12 @@ void Game::GameLoop() {
             }
         }
 
-        systemManager.Update();
+        systemManager.Update(currentKeyboardState);
         gui.RenderScreen(systemManager);
 
         // Control frame rate
         frameEnd = SDL_GetTicks64();
-        if (frameEnd - frameStart < desiredFrameTicks)
-            SDL_Delay(desiredFrameTicks - (frameEnd - frameStart));
+        if (frameEnd - frameStart < World::desiredFrameTicks)
+            SDL_Delay(World::desiredFrameTicks - (frameEnd - frameStart));
     }
 }

@@ -7,11 +7,13 @@ class SystemManager {
 
     private:
         EntityManager &entityManager;
+        EventSystem eventSystem = EventSystem(entityManager);
         MovementSystem movementSystem = MovementSystem(entityManager);
         RenderSystem renderSystem = RenderSystem(entityManager);
 
     public:
-        void Update() {
+        void Update(const Uint8* currentKeyboardState) {
+            eventSystem.Update(currentKeyboardState);
             movementSystem.Update();
         }
 

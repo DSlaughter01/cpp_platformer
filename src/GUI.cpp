@@ -2,14 +2,16 @@
 #include <iostream>
 
 GUI::GUI() :
-    windowWidth(900), windowHeight(640) {
+    windowWidth(World::windowWidth), windowHeight(World::windowHeight) {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         std::cerr << "Problem initialising SDL: " << SDL_GetError() << std::endl;
+        return;
     }
 
     if (IMG_Init(IMG_INIT_PNG) < 0) {
         std::cerr << "Problem initialising SDL_Image: " << IMG_GetError() << std::endl;
+        return;
     }
 
     window = SDL_CreateWindow("Platformer", 
@@ -20,6 +22,16 @@ GUI::GUI() :
                     0);
 
     renderer = SDL_CreateRenderer(window, -1, 0); 
+
+    if (!window) {
+        std::cerr << "Problem creating window: " << SDL_GetError() << std::endl;
+        return;
+    }
+
+    if (!renderer) {
+        std::cerr << "Problem creating renderer: " << SDL_GetError() << std::endl;
+        return;
+    }
 
     LoadBackAndMiddle();
     PopulateIDToFilenameMap();
@@ -57,6 +69,8 @@ void GUI::LoadBackAndMiddle() {
     SDL_FreeSurface(midSurf);
 }
 
+
+// TODO: review use of IDToFilemap - the keys of IDToFilenameMap are just the index in textureFilenames, so redundant
 void GUI::PopulateIDToFilenameMap() {
 
     IDToFilenameMap.clear();

@@ -1,6 +1,7 @@
 #pragma once
 #include "EntityManager.hpp"
 #include <map>
+#include "Variables.hpp"
 
 class System {
 
@@ -10,11 +11,25 @@ class System {
 };
 
 
+class EventSystem : public System {
+
+    public:
+        EventSystem(EntityManager &em) : entityManager(em) {}
+
+        void Update() override {}
+        void Update(const Uint8* currentKeyboardState);
+
+    private:
+        EntityManager &entityManager;
+};
+
+
 class RenderSystem : public System {
 
     public:
         RenderSystem(EntityManager &em) : entityManager(em) {}
-        void Update() override {};
+        
+        void Update() override {}
         void Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVector);
     
     private:

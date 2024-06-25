@@ -1,2 +1,6 @@
-Remove magic numbers (e.g. put tile_dim)
 Things are getting a bit confusing re. how to know which file is being rendered? Right now it is dependent on me knowing how I coded it, which is probably not good design
+
+Task 1: Create a more efficient way of passing the entities to the systems - i.e. vectors which store rendering info etc.
+Task 2: Untangle rendering of entities
+Task 3: Create more components
+Task 4: Collision system
