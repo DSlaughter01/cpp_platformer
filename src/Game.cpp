@@ -17,6 +17,18 @@ Game::~Game() {
 void Game::LoadPlayer() {
 
     Entity e = entityManager.CreateEntity();
+
+    CRigidBody rb(true);
+    entityManager.AddComponent(e, std::make_shared<CRigidBody>(rb));
+
+    CTag tag(TagID::Player);
+    entityManager.AddComponent(e, std::make_shared<CTag>(tag));
+
+    CLanded landed(false);
+    entityManager.AddComponent(e, std::make_shared<CLanded>(landed));
+
+    CIsAlive alive(true);
+    entityManager.AddComponent(e, std::make_shared<CIsAlive>(alive));
    
     CTransform transform(64, 64, Player::w, Player::h);
     entityManager.AddComponent(e, std::make_shared<CTransform>(transform));
@@ -56,6 +68,12 @@ void Game::LoadTilemap() {
 
                     Entity e = entityManager.CreateEntity();
 
+                    CTag tag(TagID::Tile);
+                    entityManager.AddComponent(e, std::make_shared<CTag>(tag));
+
+                    CRigidBody rb(true);
+                    entityManager.AddComponent(e, std::make_shared<CRigidBody>(rb));
+
                     CTransform transform(x, y, World::tileDim, World::tileDim);
                     entityManager.AddComponent(e, std::make_shared<CTransform>(transform));
 
@@ -70,7 +88,6 @@ void Game::LoadTilemap() {
         }
     }
     tilemapFile.close();
-
 }
 
 void Game::GameLoop() {

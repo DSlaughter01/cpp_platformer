@@ -85,16 +85,23 @@ void EntityManager::CheckSystems(Entity e) {
 
     // RenderSystem
     if (renderEntities.find(e) == renderEntities.end() &&
-    HasComponent(e, ComponentID::cSpritesheetID) &&
-    HasComponent(e, ComponentID::cTransformID)) {
+    HasComponent(e, ComponentID::cSpritesheet) &&
+    HasComponent(e, ComponentID::cTransform)) {
         renderEntities.emplace(e);
     }
 
     // MovementSystem
     if (moveEntities.find(e) == moveEntities.end() &&
-    HasComponent(e, ComponentID::cTransformID) &&
-    HasComponent(e, ComponentID::cVelocityID)) { // This may need changing when offsets come into play
+    HasComponent(e, ComponentID::cTransform) &&
+    HasComponent(e, ComponentID::cVelocity)) { // This may need changing when offsets come into play
         moveEntities.emplace(e);
+    }
+
+    // CollisonSystem
+    if (std::find(collideEntities.begin(), collideEntities.end(), e) == collideEntities.end() &&
+    HasComponent(e, ComponentID::cRigidBody) &&
+    HasComponent(e, ComponentID::cTransform)) {
+        collideEntities.emplace_back(e);
     }
 }
 

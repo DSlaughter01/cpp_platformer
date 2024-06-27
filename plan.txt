@@ -1,6 +1,30 @@
 Things are getting a bit confusing re. how to know which file is being rendered? Right now it is dependent on me knowing how I coded it, which is probably not good design
 
-Task 1: Create a more efficient way of passing the entities to the systems - i.e. vectors which store rendering info etc.
-Task 2: Untangle rendering of entities
-Task 3: Create more components
-Task 4: Collision system
+Task 1: Collision system
+Task 2: Don't allow continuous jumps
+
+- Check whether the entities are colliding, and if so, what to do with them
+- If not, it should not, but this should still be returned because the 
+- Should the function return pairs of objects that are colliding?
+- Then the returned object should be passed to 2 functions - one horizontal and one vertical
+- If the entity has a velocity component, its behaviour should be updated 
+- The outcome of the 2 hor/vel functions should determine how the movement is updated
+
+
+Checking collision:
+Presumably need some notion of left and right rectangles, or maybe top and bottom depending on the context
+These could be returned in the collision function
+The objects are passed to the movement system, and the movement system changes the velocity 
+
+In which possible scenarios would velocity need to be updated? 
+Can I just have one function which updates velocities in all different scenarios?
+    Left key is pressed
+    Right key is pressed
+    Spacebar is pressed
+    Player collides with an object (different responses for horizontal and vertical) 
+    Later on, two enemies collide
+    If damage is given out
+    If a bullet is fired and then
+        - hits someone
+        - dies
+    

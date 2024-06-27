@@ -13,6 +13,7 @@
 #include "Components.hpp"
 #include "Variables.hpp"
 #include <set>
+#include <algorithm>
 
 // https://medium.com/@savas/nomad-game-engine-part-3-the-big-picture-743cec145685
 
@@ -46,6 +47,7 @@ class EntityManager {
         // Entities possessing certain qualities, relevant for efficiency of passing entities to systems
         std::set<Entity> renderEntities;
         std::set<Entity> moveEntities;
+        std::vector<Entity> collideEntities;
 
     private:
         // A queue of entities that are not already in the game

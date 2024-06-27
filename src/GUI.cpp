@@ -45,13 +45,18 @@ GUI::~GUI() {
 
     for (auto &i: entityTextureVector) {
         SDL_DestroyTexture(i);
+        i = nullptr;
     }
 
     SDL_DestroyTexture(backgroundTex);
     SDL_DestroyTexture(middleTex);
+    backgroundTex = nullptr;
+    middleTex = nullptr;
 
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
+    window = nullptr;
+    renderer = nullptr;
 
     SDL_Quit();
     IMG_Quit();
