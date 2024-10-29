@@ -55,13 +55,12 @@ class InputSystem : public System {
 class CollisionSystem : public System {
 
     public:
-        CollisionSystem(EntityManager &em) : entityManager(em), anyCollisions(false),
+        CollisionSystem(EntityManager &em) : entityManager(em),
         anyHorCollisions(false), anyVertCollisions(false) {}
         void Update() override;
 
     private:
 
-        bool anyCollisions;
         bool anyHorCollisions, anyVertCollisions;
 
         std::array<bool, World::maxEntities> entities {};
@@ -75,7 +74,8 @@ class CollisionSystem : public System {
     private:
         void GetEntityData();
         void ResetCollisionVariables();
-        void CheckCollisions();
+        void CheckVerticalCollisions();
+        void CheckHorizontalCollisions();
         void ResolveHorizontalCollisions();
         void ResolveVerticalCollisions();
 };

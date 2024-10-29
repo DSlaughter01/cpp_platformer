@@ -92,19 +92,15 @@ void InputSystem::Update(const Uint8* keyboard) {
 void CollisionSystem::Update() {
 
     GetEntityData();
-
-    CheckCollisions();
-
-    if (!anyCollisions)
-        return;
-
-    if (anyHorCollisions) {
-        ResolveHorizontalCollisions();
-        CheckCollisions();
-    }
+    CheckVerticalCollisions();
 
     if (anyVertCollisions)
         ResolveVerticalCollisions();
+
+    CheckHorizontalCollisions();
+
+    if (anyHorCollisions)
+        ResolveHorizontalCollisions();
 }
 
 
@@ -118,36 +114,28 @@ void CollisionSystem::GetEntityData() {
             transforms[i] = entityManager.GetComponent<CTransform>(i, ComponentID::cTransform);
             collStates[i] = entityManager.GetComponent<CCollisionState>(i, ComponentID::cCollisionState); 
             velocities[i] = entityManager.GetComponent<CVelocity>(i, ComponentID::cVelocity); 
+            landComps[i] = entityManager.GetComponent<CLanded>(i, ComponentID::cLanded);
         }
     }
 }
 
 
-void CollisionSystem::ResetCollisionVariables() {
+void CollisionSystem::CheckVerticalCollisions() {
 
-    anyCollisions = false;
-    anyHorCollisions = false;
     anyVertCollisions = false;
 
-    // Reset collision components
-    for (Entity i = 0; i < World::maxEntities; i++) {
+    for (Entity i = 0; i < World::maxEntities - 1; i++) {
 
         if (collStates[i]) {
-            collStates[i]->isCollidingLeft = false;
-            collStates[i]->isCollidingRight = false;
-            collStates[i]->horCollWith.clear();
 
             collStates[i]->isCollidingUp = false;
             collStates[i]->isCollidingDown = false;
             collStates[i]->vertCollWith.clear();
         }
+
+        if (landComps[i])
+            landComps[i]->m_hasLanded = false;
     }
-}
-
-
-void CollisionSystem::CheckCollisions() {
-
-    ResetCollisionVariables();
 
     // Do a triangular loop
     for (Entity i = 0; i < World::maxEntities - 1; i++) {
@@ -170,24 +158,77 @@ void CollisionSystem::CheckCollisions() {
             // If the 2 rectangles don't collide, move on
             if (!(SDL_HasIntersection(&rect1, &rect2)))
                 continue;
-                
-            // Mark that there has been a horizontal collision
-            if (!anyCollisions)
-                anyCollisions = true;
+
+            // Same for vertical collision
+            bool a = (rect1.y < rect2.y && rect1.y + rect1.h > rect2.y); // i on top, j on bottom
+            bool b = (rect2.y < rect1.y && rect2.y + rect2.h > rect1.y); // i on bottom, j on top
+
+            if ((a || b) && !anyVertCollisions)
+                anyVertCollisions = true;
+
+            if (a) {
+
+                collStates[i]->isCollidingDown = true;
+                collStates[j]->isCollidingUp = true;
+
+                collStates[i]->vertCollWith.insert({j, Direction::Down});
+                collStates[j]->vertCollWith.insert({i, Direction::Up});
+            }
+
+            else if (b) {
+
+                collStates[i]->isCollidingUp = true;
+                collStates[j]->isCollidingDown = true;
+
+                collStates[i]->vertCollWith.insert({j, Direction::Up});
+                collStates[j]->vertCollWith.insert({i, Direction::Down});
+            }
+        }
+    }
+}
+
+
+void CollisionSystem::CheckHorizontalCollisions() {
+
+    anyHorCollisions = false;
+
+    for (Entity i = 0; i < World::maxEntities - 1; i++) {
+
+        if (collStates[i]) {
+            collStates[i]->isCollidingLeft = false;
+            collStates[i]->isCollidingRight = false;
+            collStates[i]->horCollWith.clear();
+        }
+    }
+
+    // Do a triangular loop
+    for (Entity i = 0; i < World::maxEntities - 1; i++) {
+
+        if (!entities[i]) 
+            continue; 
+
+        for (Entity j = i + 1; j < World::maxEntities; j++) {
+
+            if (!entities[j]) 
+                continue;
+
+            // Transform and collision components are needed for a collision to be signaled 
+            if (!(transforms[i] && transforms[j] && collStates[i] && collStates[j]))
+                continue;
+
+            const SDL_Rect rect1 = transforms[i]->m_rect;
+            const SDL_Rect rect2 = transforms[j]->m_rect;
+
+            // If the 2 rectangles don't collide, move on
+            if (!(SDL_HasIntersection(&rect1, &rect2)))
+                continue;
 
             // Work out whether there is horizontal collision
             bool a = (rect1.x < rect2.x && rect1.x + rect1.w > rect2.x); // i on left, j on right
-            bool b = (rect2.x < rect1.x && rect2.x + rect2.w > rect1.x); // i on right, j on left
+            bool b = (rect2.x < rect1.x && rect2.x + rect2.w > rect1.x); // i on right, j on left 
 
             if ((a || b) && !anyHorCollisions)
                 anyHorCollisions = true;
-
-            // Same for vertical collision
-            bool c = (rect1.y < rect2.y && rect1.y + rect1.h > rect2.y); // i on top, j on bottom
-            bool d = (rect2.y < rect1.y && rect2.y + rect2.h > rect1.y); // i on bottom, j on top
-
-            if ((c || d) && !anyVertCollisions)
-                anyVertCollisions = true;
 
             if (a) {
 
@@ -205,24 +246,6 @@ void CollisionSystem::CheckCollisions() {
 
                 collStates[i]->horCollWith.insert({j, Direction::Left});
                 collStates[j]->horCollWith.insert({i, Direction::Right});
-            }
-
-            if (c) {
-
-                collStates[i]->isCollidingDown = true;
-                collStates[j]->isCollidingUp = true;
-
-                collStates[i]->vertCollWith.insert({j, Direction::Down});
-                collStates[j]->vertCollWith.insert({i, Direction::Up});
-            }
-
-            else if (d) {
-
-                collStates[i]->isCollidingUp = true;
-                collStates[j]->isCollidingDown = true;
-
-                collStates[i]->vertCollWith.insert({j, Direction::Up});
-                collStates[j]->vertCollWith.insert({i, Direction::Down});
             }
         }
     }
@@ -298,9 +321,9 @@ void CollisionSystem::ResolveVerticalCollisions() {
     for (Entity i = 0; i < World::maxEntities; i++) {
 
         // Needs all 3 components, and for the velocity to be changeable
-        if (!(collStates[i] && transforms[i] && velocities[i]) || !velocities[i]->m_canAccelerate)
+        if (!(collStates[i] && transforms[i] && velocities[i]) || !velocities[i]->m_canAccelerate) 
             continue;
-
+        
         // For each entity that Entity i is colliding with
         for (auto &ent : collStates[i]->vertCollWith) {
  
@@ -309,6 +332,11 @@ void CollisionSystem::ResolveVerticalCollisions() {
 
             Entity top = (ent.second == Direction::Down) ? i : ent.first;
             Entity bottom = (top == i) ? ent.first : i;
+
+            // Falling object landed (if it has a landed component)
+            if (landComps[top]) {
+                landComps[top]->m_hasLanded = true;
+            }
 
             // Fixed objects may not have a velocity component
             if (!velocities[bottom]) {
@@ -322,10 +350,6 @@ void CollisionSystem::ResolveVerticalCollisions() {
 
             // Top object moving faster than bottom object (means moving down)
             else if (velocities[top]->dy > velocities[bottom]->dy) {
-
-                // Falling object landed (if it has a landed component)
-                if (landComps[top])
-                    landComps[top]->m_hasLanded = true;
 
                 transforms[top]->m_rect.y = transforms[bottom]->m_rect.y - transforms[top]->m_rect.h;
                 velocities[top]->dy = velocities[bottom]->dy;
