@@ -2,30 +2,32 @@
 #include "Systems.hpp"
 
 class SystemManager {
+
     public:
-        SystemManager(EntityManager &em) : entityManager(em) {}
+        SystemManager(EntityManager &em) : 
+            entityManager(em),
+            inputSystem(em),
+            movementSystem(em),
+            renderSystem(em),
+            collisionSystem(em) {}
 
     private:
         EntityManager &entityManager;
-        InputSystem inputSystem = InputSystem(entityManager);
-        MovementSystem movementSystem = MovementSystem(entityManager);
-        RenderSystem renderSystem = RenderSystem(entityManager);
-        CollisionSystem collisionSystem = CollisionSystem(entityManager);
+        InputSystem inputSystem;
+        MovementSystem movementSystem;
+        RenderSystem renderSystem;
+        CollisionSystem collisionSystem;
 
     public:
         void Update(const Uint8* currentKeyboardState) {
 
-            std::vector<EntityPair> col = collisionSystem.CheckIsCollidingRect(entityManager.collideEntities);
-            std::vector<EntityPair> vert = collisionSystem.CheckVerticalCollision(col);
-            movementSystem.HandleVerticalCollision(vert);
-
             inputSystem.Update(currentKeyboardState);
-
-            movementSystem.Update(entityManager.moveEntities);
+            movementSystem.Update();
+            collisionSystem.Update();     
         }
 
-        void Draw(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVector) {
+        void Draw(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec) {
 
-            renderSystem.Update(ren, entityManager.renderEntities, textureVector);
+            renderSystem.Update(ren, textureVec);
         }
 };

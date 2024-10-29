@@ -3,6 +3,7 @@
 #include <array>
 #include <iostream>
 #include <bitset>
+#include <optional>
 #include <vector>
 #include <memory>
 #include <queue>
@@ -14,6 +15,7 @@
 #include "Variables.hpp"
 #include <set>
 #include <algorithm>
+#include <utility>
 
 // https://medium.com/@savas/nomad-game-engine-part-3-the-big-picture-743cec145685
 
@@ -21,44 +23,86 @@ using Entity = short int;
 
 class EntityManager {
 
-    public:
-
-        EntityManager();
-
-        Entity CreateEntity();
-        
-        void SetPlayerEntity(Entity e);
-
-        void RemoveEntity(Entity e);
-
-        void AddComponent(Entity e, std::shared_ptr<Component> component);
-
-        // Check to see whether the adding a component makes the entity eligible for any system
-        void CheckSystems(Entity e);
-
-        // Checks whether an entity has that component
-        bool HasComponent(Entity e, short int componentID);
-
-        // Returns a reference to the component, so that it can then be modified
-        std::shared_ptr<Component> GetComponentAtIndex(Entity e, short int componentID);
-
+    private:
         Entity playerEntity;
 
-        // Entities possessing certain qualities, relevant for efficiency of passing entities to systems
-        std::set<Entity> renderEntities;
-        std::set<Entity> moveEntities;
-        std::vector<Entity> collideEntities;
-
-    private:
         // A queue of entities that are not already in the game
         std::queue<Entity> availableEntityIDs;
 
         // True if an entity is present, false if not
         std::array<bool, World::maxEntities> m_entities;
 
-        // Maps an entity to the vector of its components
-        std::unordered_map<Entity, std::array<std::shared_ptr<Component>, World::maxEntities>> entityComponentMap;
+        // Maps an entity to the array of its components
+        std::unordered_map<Entity, std::array<std::shared_ptr<Component>, World::maxComponents>> entityComponentMap;
 
-        // The bitsets signifying the presence (or not) of each components
+        // The bitsets signifying the presence (or not) of each component
         std::array<std::bitset<World::maxComponents>, World::maxEntities> m_entityComponentBitset;
+
+    public:
+
+        EntityManager();
+
+        void SetPlayerEntity(Entity e);
+        Entity GetPlayerEntity() {return playerEntity;}
+        std::array<bool, World::maxEntities> GetEntities() {return m_entities;}
+
+        // ENTITY FUNCTIONS
+        Entity CreateEntity();
+    
+        void RemoveEntity(Entity e);
+
+        void ClearEntities();
+
+
+        // COMPONENT FUNCTIONS
+        template<typename T>
+        void AddComponent(Entity e, T& component) {
+
+            std::shared_ptr<T> comp = std::make_shared<T>(component);
+
+            if (!m_entities[e]) {
+                std::cerr << "Trying to access an Entity that doesn't exist." << std::endl;
+                return;
+            }
+
+            // See if a component of that type has already been added
+            if (HasComponent(e, comp->componentID)) {
+                std::cout << "Entity " << e << " already has component " << comp->componentID << "." << std::endl;
+                return;
+            }
+
+            m_entityComponentBitset[e].set(comp->componentID);
+            entityComponentMap[e][comp->componentID] = comp;  
+        }
+
+        // Checks whether an entity has that component
+        bool HasComponent(Entity e, int componentID);
+
+        // Returns a pointer to a component, so that it can then be used
+        template<typename T>
+        std::shared_ptr<T> GetComponent(Entity e, int componentID) {
+
+            if (HasComponent(e, componentID))
+                return std::dynamic_pointer_cast<T>(entityComponentMap[e][componentID]);
+            else
+                return nullptr;
+        }
+
+
+        template<typename T>
+        void RemoveComponent(Entity e, int componentID) {
+
+            if (!m_entities[e]) {
+                std::cerr << "Trying to access an Entity that doesn't exist." << std::endl;
+                return;
+            }
+
+            if (!entityComponentMap[e][componentID]) {
+                std::cout << "Entity " << e << " doesn't have component " << componentID << "." << std::endl;
+                return;
+            }
+
+            m_entityComponentBitset[e].reset(componentID);
+            entityComponentMap[e][componentID] = nullptr;
+        }
 };

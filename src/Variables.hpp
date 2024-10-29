@@ -1,5 +1,7 @@
 #pragma once 
 
+using Entity = short int;
+
 namespace Player {
 
     extern int w;
@@ -13,6 +15,7 @@ namespace Player {
     extern int maxFallDY;
 };
 
+enum Direction {None, Left, Right, Up, Down};
 
 namespace World {
 
@@ -30,4 +33,6 @@ namespace World {
     // Entities
     const int maxEntities = 256;
     const int maxComponents = 32;
+    const Entity noPlayer = -1;
+    const int maxTextures = 32;
 };

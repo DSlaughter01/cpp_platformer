@@ -7,19 +7,19 @@
 #include "SystemManager.hpp"
 #include "Variables.hpp"
 
-
 class GUI {
 
     public:
-        GUI();
+        GUI() = default;
+        GUI(std::vector<std::string> &textureFilenames);
         ~GUI();
-        void LoadBackAndMiddle();
-        void PopulateIDToFilenameMap();
-
-        void LoadEntityTextures();
+        void LoadTextures();
         void RenderScreen(SystemManager &systemManager);
 
     private:
+
+        const int backImgIdx = 0;
+        const int middleImgIdx = 1;
 
         int windowWidth, windowHeight;
 
@@ -31,6 +31,6 @@ class GUI {
 
         SDL_Rect backgroundDest;
 
-        std::map<short int, std::string> IDToFilenameMap;
-        std::vector<SDL_Texture*> entityTextureVector;
+        std::vector<std::string> m_textureFilenames;
+        std::vector<SDL_Texture*> textureVector;
 };

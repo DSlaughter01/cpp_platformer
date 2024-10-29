@@ -1,8 +1,8 @@
 #include "EntityManager.hpp"
 #include "Variables.hpp"
 
-
-EntityManager::EntityManager() {
+EntityManager::EntityManager() :
+    playerEntity(World::noPlayer) {
 
     // Initialise availableEntityIDs
     availableEntityIDs = {};
@@ -25,7 +25,7 @@ Entity EntityManager::CreateEntity() {
 
     if (availableEntityIDs.empty()) {
         std::cerr << "No more entities left!!!" << std::endl;
-        return World::maxEntities - 1;
+        return World::noPlayer;
     }
 
     // Get an available entity ID
@@ -47,80 +47,48 @@ void EntityManager::SetPlayerEntity(Entity e) {
     playerEntity = e;
 }
 
+// TODO : Add a function which tells the user if an entity is active
+
 void EntityManager::RemoveEntity(Entity e) {
 
-    // Add the entity back onto the available entities queue
-    availableEntityIDs.push(e);
+    if (m_entities[e]) {
 
-    // Reset its bitset
-    m_entityComponentBitset[e].reset();   
+        // Add the entity back onto the available entities queue
+        availableEntityIDs.push(e);
 
-    // Signify removal in m_entities
-    m_entities[e] = false;
+        // Reset its bitset
+        m_entityComponentBitset[e].reset();   
 
-    // Remove it from the map
-    entityComponentMap.erase(e);
-}
+        // Signify removal in m_entities
+        m_entities[e] = false;
 
-
-void EntityManager::AddComponent(Entity e, std::shared_ptr<Component> component) {
-
-    if (!m_entities[e]) {
-        std::cerr << "Trying to access an Entity that doesn't exist." << std::endl;
-        return;
-    }
-
-    // See if a component of that type has already been added
-    if (entityComponentMap[e][component->componentID]) {
-        std::cout << "Entity " << e << " already has component " << component->componentID << "." << std::endl;
-        return;
-    }
-
-    m_entityComponentBitset[e].set(component->componentID);
-    entityComponentMap[e][component->componentID] = component;  
-}
-
-
-void EntityManager::CheckSystems(Entity e) {
-
-    // RenderSystem
-    if (renderEntities.find(e) == renderEntities.end() &&
-    HasComponent(e, ComponentID::cSpritesheet) &&
-    HasComponent(e, ComponentID::cTransform)) {
-        renderEntities.emplace(e);
-    }
-
-    // MovementSystem
-    if (moveEntities.find(e) == moveEntities.end() &&
-    HasComponent(e, ComponentID::cTransform) &&
-    HasComponent(e, ComponentID::cVelocity)) { // This may need changing when offsets come into play
-        moveEntities.emplace(e);
-    }
-
-    // CollisonSystem
-    if (std::find(collideEntities.begin(), collideEntities.end(), e) == collideEntities.end() &&
-    HasComponent(e, ComponentID::cRigidBody) &&
-    HasComponent(e, ComponentID::cTransform)) {
-        collideEntities.emplace_back(e);
+        // Remove it from the map
+        entityComponentMap.erase(e);
     }
 }
 
 
-bool EntityManager::HasComponent(Entity e, short int componentID) { 
+void EntityManager::ClearEntities() {
 
-    return ((m_entityComponentBitset[e].test(componentID)));
+    for (short int e = 0; e < World::maxEntities; e++) {
+
+        if (m_entities[e]) {
+
+            m_entities[e] = false;
+            availableEntityIDs.push(e);
+            m_entityComponentBitset[e].reset();
+            entityComponentMap.erase(e);
+        }
+    }
+
+    SetPlayerEntity(World::noPlayer);
 }
 
 
-std::shared_ptr<Component> EntityManager::GetComponentAtIndex(Entity e, short int componentID) {
+bool EntityManager::HasComponent(Entity e, int componentID) {
 
-    if (!HasComponent(e, componentID)) {
-        std::cerr << "Entity " << e << " does not have component " << componentID << "." << std::endl;
-        return nullptr;
-    }
-
-    else {
-        // Get the correct component
-        return entityComponentMap[e][componentID];
-    }
+    if (m_entityComponentBitset[e].test(componentID) && entityComponentMap[e][componentID])
+        return true;
+    else    
+        return false;
 }

@@ -19,8 +19,19 @@ class Game {
 
     public:
 
+        std::vector<std::string> textureFilenames = {
+            "assets/back.png",
+            "assets/middle.png",
+            "assets/spritesheets/sprite_still.png",
+            "assets/tiles/alone_floor.png",
+            "assets/spritesheets/beetle.png"
+        };
+
+        enum filenameIdx {back, middle, spriteStill, aloneFloor, beetle};
+
     private:
-        GUI gui;
+        GUI gui = GUI(textureFilenames);
+
         EntityManager entityManager;
         SystemManager systemManager = SystemManager(entityManager);
 

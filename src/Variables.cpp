@@ -9,7 +9,7 @@ namespace Player {
     int initHP = 3;
 
     int maxDX = 3;
-    int jumpDY = -8;
+    int jumpDY = -20;
     int maxFallDY = 8;
 };
 

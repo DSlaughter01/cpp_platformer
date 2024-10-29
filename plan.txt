@@ -1,30 +1,47 @@
-Things are getting a bit confusing re. how to know which file is being rendered? Right now it is dependent on me knowing how I coded it, which is probably not good design
+TODO NEXT:
+Collision system following the steps on chatgpt
 
-Task 1: Collision system
-Task 2: Don't allow continuous jumps
+Comments:
+1\ File Game.cpp, function LoadPlayer. Maybe there is a way to just get the component type and add the component within the function and use it like em.addComponent(e, velocity). Then inside it would be:
+    type = arg1.GetComponent();
 
-- Check whether the entities are colliding, and if so, what to do with them
-- If not, it should not, but this should still be returned because the 
-- Should the function return pairs of objects that are colliding?
-- Then the returned object should be passed to 2 functions - one horizontal and one vertical
-- If the entity has a velocity component, its behaviour should be updated 
-- The outcome of the 2 hor/vel functions should determine how the movement is updated
+And in the component there would be a deduce subtype (can this be done?)
+
+2\ File EntityManager.cpp function GetComponent. It would be good to be able to add multiple components at the same time
+
+3\ File Game.cpp function LoadTilemap. Remove 64 and add TILE_DIM (= 64)
+
+4\ File Game.cpp function GameLoop. Combine LoadPlayer and LoadTilemap and maybe some other info into a LoadGame function
+
+5\ File EntityManager.hpp Why do I have 2 sets and 1 vector in CollideEntities etc.?
+
+6\ I took out m_maxFrames from the spritesheet, but maybe it could be good to have this to prevent currentframes from getting too big
 
 
-Checking collision:
-Presumably need some notion of left and right rectangles, or maybe top and bottom depending on the context
-These could be returned in the collision function
-The objects are passed to the movement system, and the movement system changes the velocity 
 
-In which possible scenarios would velocity need to be updated? 
-Can I just have one function which updates velocities in all different scenarios?
-    Left key is pressed
-    Right key is pressed
-    Spacebar is pressed
-    Player collides with an object (different responses for horizontal and vertical) 
-    Later on, two enemies collide
-    If damage is given out
-    If a bullet is fired and then
-        - hits someone
-        - dies
-    
+Collision detection:
+Every object has a set of switches, contained in CTransform, CLanded, CVelocity, and CCollisionState
+Things that cause a collision:
+    transform.m_rect
+    velocity.dx
+    velocity.dy
+
+In order for a collision to happen between 2 objects:
+    At least one of the objects has to have a velocity component, either dx or dy must be greater than 0
+    Both of the objects have to have a transform component
+
+When there is a collision, the following things change:
+    collisionState.isColliding
+    collisionState.horCollDir and/or collisionState.vertCollDir
+    collisionState.horrCollWith and/or collisionState.vertCollWith
+    velocity.dx or velocity.dy 
+    transform.m_rect
+
+Functions (in order):
+
+Check whether there are any two rectangles colliding
+First do the horizontal check
+Then do the horizontal response
+Check whether there are still objects colliding
+Then do the vertical check
+Then the vertical response

@@ -1,7 +1,7 @@
 #include "GUI.hpp"
 #include <iostream>
 
-GUI::GUI() :
+GUI::GUI(std::vector<std::string> &textureFilenames) :
     windowWidth(World::windowWidth), windowHeight(World::windowHeight) {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -33,74 +33,52 @@ GUI::GUI() :
         return;
     }
 
-    LoadBackAndMiddle();
-    PopulateIDToFilenameMap();
-    LoadEntityTextures();
+    m_textureFilenames = textureFilenames;
 
+    LoadTextures();
     backgroundDest = {0, 0, windowWidth, windowHeight};
 }
 
 
 GUI::~GUI() {
 
-    for (auto &i: entityTextureVector) {
+    for (auto &i: textureVector) {
         SDL_DestroyTexture(i);
         i = nullptr;
     }
 
     SDL_DestroyTexture(backgroundTex);
-    SDL_DestroyTexture(middleTex);
     backgroundTex = nullptr;
+
+    SDL_DestroyTexture(middleTex);
     middleTex = nullptr;
 
     SDL_DestroyWindow(window);
-    SDL_DestroyRenderer(renderer);
     window = nullptr;
+
+    SDL_DestroyRenderer(renderer);
     renderer = nullptr;
 
-    SDL_Quit();
     IMG_Quit();
+    SDL_Quit();
 }
 
 
-void GUI::LoadBackAndMiddle() {
+void GUI::LoadTextures() {
 
-    SDL_Surface* backSurf = IMG_Load("assets/back.png");
-    backgroundTex = SDL_CreateTextureFromSurface(renderer, backSurf);
-    SDL_FreeSurface(backSurf);
+    textureVector.reserve(m_textureFilenames.size());
 
-    SDL_Surface* midSurf = IMG_Load("assets/middle.png");
-    middleTex = SDL_CreateTextureFromSurface(renderer, midSurf);
-    SDL_FreeSurface(midSurf);
-}
-
-
-// TODO: review use of IDToFilemap - the keys of IDToFilenameMap are just the index in textureFilenames, so redundant
-void GUI::PopulateIDToFilenameMap() {
-
-    IDToFilenameMap.clear();
-
-    std::vector<std::string> textureFilenames = {
-        "assets/spritesheets/sprite_still.png",
-        "assets/tiles/alone_floor.png",
-        "assets/tiles/tiles.png"
-    };
-
-    for (int i = 0; i < textureFilenames.size(); i++)
-        IDToFilenameMap[i] = textureFilenames[i]; 
-}
-
-
-void GUI::LoadEntityTextures() {
-
-    for (auto &file : IDToFilenameMap) {
+    for (int i = 0; i < m_textureFilenames.size(); i++) {            
         
-        SDL_Surface* imgSurf = IMG_Load(file.second.c_str());
+        SDL_Surface* imgSurf = IMG_Load(m_textureFilenames[i].c_str());
         SDL_Texture* imgTex = SDL_CreateTextureFromSurface(renderer, imgSurf);
         SDL_FreeSurface(imgSurf);
 
-        entityTextureVector.emplace_back(imgTex);
+        textureVector[i] = imgTex;
     }
+
+    backgroundTex = textureVector[backImgIdx];
+    middleTex = textureVector[middleImgIdx];
 }
 
 
@@ -110,6 +88,6 @@ void GUI::RenderScreen(SystemManager &systemManager) {
     
     SDL_RenderCopy(renderer, backgroundTex, NULL, &backgroundDest);
     SDL_RenderCopy(renderer, middleTex, NULL, &backgroundDest);
-    systemManager.Draw(renderer, entityTextureVector);
+    systemManager.Draw(renderer, textureVector);
     SDL_RenderPresent(renderer);
 }

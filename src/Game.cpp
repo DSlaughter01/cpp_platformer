@@ -18,30 +18,20 @@ void Game::LoadPlayer() {
 
     Entity e = entityManager.CreateEntity();
 
-    CRigidBody rb(true);
-    entityManager.AddComponent(e, std::make_shared<CRigidBody>(rb));
-
-    CTag tag(TagID::Player);
-    entityManager.AddComponent(e, std::make_shared<CTag>(tag));
-
+    // Create a player with simple components
+    CTransform transform(64 * 6, 64 + 10, 64, 64);
+    CCollisionState collision;
+    CSpritesheet spritesheet(filenameIdx::spriteStill, 1, 24, 24, Direction::Right, 2);
+    CVelocity velocity(true, -3, 0);
     CLanded landed(false);
-    entityManager.AddComponent(e, std::make_shared<CLanded>(landed));
 
-    CIsAlive alive(true);
-    entityManager.AddComponent(e, std::make_shared<CIsAlive>(alive));
-   
-    CTransform transform(64, 64, Player::w, Player::h);
-    entityManager.AddComponent(e, std::make_shared<CTransform>(transform));
-
-    CSpritesheet spritesheet(0);
-    entityManager.AddComponent(e, std::make_shared<CSpritesheet>(spritesheet));
-
-    CVelocity velocity(0, 0);
-    entityManager.AddComponent(e, std::make_shared<CVelocity>(velocity));  
+    entityManager.AddComponent(e, transform);
+    entityManager.AddComponent(e, collision);
+    entityManager.AddComponent(e, spritesheet);
+    entityManager.AddComponent(e, velocity);
+    entityManager.AddComponent(e, landed);
 
     entityManager.SetPlayerEntity(e);
-
-    entityManager.CheckSystems(e);
 }
 
 
@@ -68,20 +58,16 @@ void Game::LoadTilemap() {
 
                     Entity e = entityManager.CreateEntity();
 
-                    CTag tag(TagID::Tile);
-                    entityManager.AddComponent(e, std::make_shared<CTag>(tag));
-
-                    CRigidBody rb(true);
-                    entityManager.AddComponent(e, std::make_shared<CRigidBody>(rb));
-
+                    // Create the tile with Transform, Spritesheet, and Collision components
                     CTransform transform(x, y, World::tileDim, World::tileDim);
-                    entityManager.AddComponent(e, std::make_shared<CTransform>(transform));
+                    CCollisionState collision;
+                    CSpritesheet spritesheet(currentLine[i] - '0' + 2, 1, 18, 18);
+                    CVelocity velocity(false, 0, 0);
 
-                    CSpritesheet spritesheet(currentLine[i] - '0');
-                    entityManager.AddComponent(e, std::make_shared<CSpritesheet>(spritesheet));
-
-                    // Add entity to the relevant system sets
-                    entityManager.CheckSystems(e);
+                    entityManager.AddComponent<CTransform>(e, transform);
+                    entityManager.AddComponent<CCollisionState>(e, collision);
+                    entityManager.AddComponent<CSpritesheet>(e, spritesheet);
+                    entityManager.AddComponent<CVelocity>(e, velocity);
                 }
             }
             line++;
