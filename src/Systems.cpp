@@ -61,7 +61,6 @@ void InputSystem::Update(const Uint8* keyboard) {
     if (!velocity) 
         return;
 
-
     // Move horizontally if uninhibited by other collidable objects
     if (keyboard[SDL_SCANCODE_LEFT])
         velocity->dx = -Player::maxDX;
@@ -75,12 +74,13 @@ void InputSystem::Update(const Uint8* keyboard) {
         return;
     }
 
-    // Fall
+    // Jump
     if (landed->m_hasLanded && keyboard[SDL_SCANCODE_SPACE]) {
         velocity->dy = Player::jumpDY;
         landed->m_hasLanded = false;
     }
 
+    // Fall
     else if (!(landed->m_hasLanded) && velocity->dy < Player::maxFallDY)
         velocity->dy += World::gravity;
     else if (landed->m_hasLanded)

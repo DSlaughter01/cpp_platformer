@@ -4,22 +4,22 @@ using Entity = short int;
 
 namespace Player {
 
-    extern int w;
-    extern int h;
+    inline  int w = 64;
+    inline  int h = 64;
 
-    extern int maxHP;
-    extern int initHP;
+    inline  int maxHP = 5;
+    inline  int initHP = 3;
 
-    extern int maxDX;
-    extern int jumpDY;
-    extern int maxFallDY;
+    inline  int maxDX = 3;
+    inline  int jumpDY = -20;
+    inline  int maxFallDY = 8;
 };
 
 enum Direction {None, Left, Right, Up, Down};
 
 namespace World {
 
-    extern int gravity;
+    inline int gravity = 1;
 
     // Dimensions - currently does not allow for window resizing
     const int windowHeight = 640;
