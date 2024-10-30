@@ -1,15 +1,14 @@
 #include "Systems.hpp" 
 
-void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec) {
-
-    std::array<bool, World::maxEntities> entities = entityManager.GetEntities();
+void RenderSystem::Update(SDL_Renderer* ren, std::bitset<World::maxEntities> &renderEntities,
+                          std::vector<SDL_Texture*> &textureVec) {
 
     std::shared_ptr<CSpritesheet> spritesheet = nullptr;
     std::shared_ptr<CTransform> transform = nullptr;
 
-    for (Entity e = 0; e < World::maxEntities; e++) {
+    for (Entity e = 0; e < renderEntities.size(); e++) {
 
-        if (entities[e]) {
+        if (renderEntities[e]) {
 
             spritesheet = entityManager.GetComponent<CSpritesheet>(e, ComponentID::cSpritesheet);
             transform = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
@@ -25,9 +24,7 @@ void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureV
 }
 
 
-void MovementSystem::Update() {
-
-    std::array<bool, World::maxEntities> entities = entityManager.GetEntities();
+void MovementSystem::Update(std::bitset<World::maxEntities> &moveEntities) {
 
     // Get the transform and velocity components
     std::shared_ptr<CTransform> transform = nullptr;
@@ -36,7 +33,7 @@ void MovementSystem::Update() {
     // Move the transform components by the velocity
     for (Entity e = 0; e < World::maxEntities; e++) {
         
-        if (entities[e]) {
+        if (moveEntities[e]) {
 
             transform = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
             velocity = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);

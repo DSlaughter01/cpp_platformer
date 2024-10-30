@@ -19,7 +19,7 @@ void Game::LoadPlayer() {
     Entity e = entityManager.CreateEntity();
 
     // Create a player with simple components
-    CTransform transform(64 * 2, 64 + 10, 64, 64);
+    CTransform transform(Player::w * 2, Player::h , Player::w, Player::h);
     CCollisionState collision;
     CSpritesheet spritesheet(filenameIdx::spriteStill, 1, 24, 24, Direction::Right, 2);
     CVelocity velocity(true, -3, 0);

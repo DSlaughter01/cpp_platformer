@@ -26,3 +26,19 @@ Assuming for the moment that fixed objects do not have a velocity component, but
 
 Adding components to systems to be rendered etc.
 Collision system required an unordered map
+
+In the EntityManager, how do I store the entities which have:
+    collision components (collisionState and transform)
+    rendering components (transform and spritesheet)
+    moving components (transform and velocity)?
+Comparatively few have landed, and this isn't necessary. Velocity is useful, but again not necessary
+To use this in the system functions, I could just use a vector of entities, and then use GetComponent for each
+When a component is added, there is a check to see whether any of the other components exist.
+Once all the components exist, the entity gets added to one of the system vectors
+
+e.g. std::vector<Entity> renderEntities;
+
+Then the correct entities would get passed to the render system, etc.
+
+I still don't quite understand how to destroy the actual component in the game
+The game creates a component and then creates a pointer to it, but when this pointer is removed from the array, where does the actual component go?

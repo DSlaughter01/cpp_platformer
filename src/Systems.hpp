@@ -4,10 +4,6 @@
 #include "Variables.hpp"
 #include "SDL2/SDL.h"
 
-struct EntityPair {
-    Entity e1, e2;
-};
-
 class System {
 
     public: 
@@ -15,13 +11,15 @@ class System {
         virtual ~System() = default;
 };
 
+
 class RenderSystem : public System {
 
     public:
         RenderSystem(EntityManager &em) : entityManager(em) {}
         
         void Update() override {}
-        void Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec);
+        void Update(SDL_Renderer* ren, std::bitset<World::maxEntities> &renderEntities,
+                    std::vector<SDL_Texture*> &textureVec);
         // void AddTexture(SDL_Texture* tex);
     
     private:
@@ -29,11 +27,13 @@ class RenderSystem : public System {
         std::array<SDL_Texture*, World::maxTextures> textureArray;
 };
 
+
 class MovementSystem : public System {
     
     public:
         MovementSystem(EntityManager &em) : entityManager(em) {}
-        void Update();
+        void Update() override {};
+        void Update(std::bitset<World::maxEntities> &moveEntities);
 
     private:
         EntityManager &entityManager;

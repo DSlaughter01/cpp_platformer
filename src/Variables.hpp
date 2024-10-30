@@ -7,7 +7,7 @@ namespace Player {
     inline  int w = 64;
     inline  int h = 64;
 
-    inline  int maxHP = 5;
+    inline  int axHP = 5;
     inline  int initHP = 3;
 
     inline  int maxDX = 3;
@@ -15,7 +15,7 @@ namespace Player {
     inline  int maxFallDY = 8;
 };
 
-enum Direction {None, Left, Right, Up, Down};
+enum class Direction {None, Left, Right, Up, Down};
 
 namespace World {
 
