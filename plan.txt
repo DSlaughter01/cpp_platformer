@@ -20,28 +20,9 @@ And in the component there would be a deduce subtype (can this be done?)
 
 
 Collision detection:
-Every object has a set of switches, contained in CTransform, CLanded, CVelocity, and CCollisionState
-Things that cause a collision:
-    transform.m_rect
-    velocity.dx
-    velocity.dy
+Assuming for the moment that fixed objects do not have a velocity component, but will come back to that later because it is not robust
 
-In order for a collision to happen between 2 objects:
-    At least one of the objects has to have a velocity component, either dx or dy must be greater than 0
-    Both of the objects have to have a transform component
 
-When there is a collision, the following things change:
-    collisionState.isColliding
-    collisionState.horCollDir and/or collisionState.vertCollDir
-    collisionState.horrCollWith and/or collisionState.vertCollWith
-    velocity.dx or velocity.dy 
-    transform.m_rect
 
-Functions (in order):
-
-Check whether there are any two rectangles colliding
-First do the horizontal check
-Then do the horizontal response
-Check whether there are still objects colliding
-Then do the vertical check
-Then the vertical response
+Adding components to systems to be rendered etc.
+Collision system required an unordered map

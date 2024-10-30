@@ -58,8 +58,10 @@ void InputSystem::Update(const Uint8* keyboard) {
     std::shared_ptr<CVelocity> velocity = entityManager.GetComponent<CVelocity>(player, ComponentID::cVelocity);
     std::shared_ptr<CLanded> landed = entityManager.GetComponent<CLanded>(player, ComponentID::cLanded);
 
-    if (!velocity) 
+    if (!velocity) {
+        std::cout << "Player doesn't have a velocity component" << std::endl;
         return;
+    } 
 
     // Move horizontally if uninhibited by other collidable objects
     if (keyboard[SDL_SCANCODE_LEFT])
@@ -350,12 +352,11 @@ void CollisionSystem::ResolveVerticalCollisions() {
 
             // Top object moving faster than bottom object (means moving down)
             else if (velocities[top]->dy > velocities[bottom]->dy) {
-
                 transforms[top]->m_rect.y = transforms[bottom]->m_rect.y - transforms[top]->m_rect.h;
                 velocities[top]->dy = velocities[bottom]->dy;
             }
 
-            // Bottom object moving faster (more negatively, given since they collide) than top object
+            // Bottom object moving faster upwards (more negatively, given since they collide) than top object
             else if (velocities[bottom]->dy < velocities[top]->dy) {
                 transforms[bottom]->m_rect.y = transforms[top]->m_rect.y + transforms[top]->m_rect.h;
                 velocities[bottom]->dy = velocities[top]->dy;

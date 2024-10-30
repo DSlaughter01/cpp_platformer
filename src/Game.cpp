@@ -53,8 +53,8 @@ void Game::LoadTilemap() {
 
                 if (currentLine[i] != '.') {
 
-                    int x = i * 64;
-                    int y = line * 64;
+                    int x = i * World::tileDim;
+                    int y = line * World::tileDim;
 
                     Entity e = entityManager.CreateEntity();
 
@@ -62,12 +62,10 @@ void Game::LoadTilemap() {
                     CTransform transform(x, y, World::tileDim, World::tileDim);
                     CCollisionState collision;
                     CSpritesheet spritesheet(currentLine[i] - '0' + 2, 1, 18, 18);
-                    CVelocity velocity(false, 0, 0);
 
                     entityManager.AddComponent<CTransform>(e, transform);
                     entityManager.AddComponent<CCollisionState>(e, collision);
                     entityManager.AddComponent<CSpritesheet>(e, spritesheet);
-                    entityManager.AddComponent<CVelocity>(e, velocity);
                 }
             }
             line++;
