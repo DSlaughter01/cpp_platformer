@@ -19,9 +19,9 @@ void Game::LoadPlayer() {
     Entity e = entityManager.CreateEntity();
 
     // Create a player with simple components
-    CTransform transform(Player::w * 2, Player::h , Player::w, Player::h);
+    CTransform transform(Player::width * 2, Player::height , Player::width, Player::height);
     CCollisionState collision;
-    CSpritesheet spritesheet(filenameIdx::spriteStill, 1, 24, 24, Direction::Right, 2);
+    CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, 5);
     CVelocity velocity(true, -3, 0);
     CLanded landed(false);
 
@@ -53,13 +53,13 @@ void Game::LoadTilemap() {
 
                 if (currentLine[i] != '.') {
 
-                    int x = i * World::tileDim;
-                    int y = line * World::tileDim;
+                    int x = i * World::TileDim;
+                    int y = line * World::TileDim;
 
                     Entity e = entityManager.CreateEntity();
 
                     // Create the tile with Transform, Spritesheet, and Collision components
-                    CTransform transform(x, y, World::tileDim, World::tileDim);
+                    CTransform transform(x, y, World::TileDim, World::TileDim);
                     CCollisionState collision;
                     CSpritesheet spritesheet(currentLine[i] - '0' + 2, 1, 18, 18);
 
@@ -101,7 +101,7 @@ void Game::GameLoop() {
 
         // Control frame rate
         frameEnd = SDL_GetTicks64();
-        if (frameEnd - frameStart < World::desiredFrameTicks)
-            SDL_Delay(World::desiredFrameTicks - (frameEnd - frameStart));
+        if (frameEnd - frameStart < World::DesiredFrameTicks)
+            SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
     }
 }

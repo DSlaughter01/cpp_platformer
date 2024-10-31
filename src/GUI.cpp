@@ -2,7 +2,7 @@
 #include <iostream>
 
 GUI::GUI(std::vector<std::string> &textureFilenames) :
-    windowWidth(World::windowWidth), windowHeight(World::windowHeight) {
+    windowWidth(World::WindowWidth), windowHeight(World::WindowHeight) {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         std::cerr << "Problem initialising SDL: " << SDL_GetError() << std::endl;

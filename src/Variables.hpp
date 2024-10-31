@@ -4,35 +4,35 @@ using Entity = short int;
 
 namespace Player {
 
-    inline  int w = 64;
-    inline  int h = 64;
+    inline int width = 64;
+    inline int height = 64;
 
-    inline  int axHP = 5;
-    inline  int initHP = 3;
+    inline int maxHP = 5;
+    inline int initHP = 3;
 
-    inline  int maxDX = 3;
-    inline  int jumpDY = -20;
-    inline  int maxFallDY = 8;
+    inline int maxDX = 3;
+    inline int jumpDY = -20;
+    inline int maxFallDY = 8;
 };
 
-enum class Direction {None, Left, Right, Up, Down};
+enum Direction {None, Left, Right, Up, Down};
 
 namespace World {
 
     inline int gravity = 1;
 
     // Dimensions - currently does not allow for window resizing
-    const int windowHeight = 640;
-    const int windowWidth = 900;
-    const int tileDim = 64;
+    constexpr int WindowHeight = 640;
+    constexpr int WindowWidth = 900;
+    constexpr int TileDim = 64;
 
     // Time spacing
-    const int FPS = 60;
-    const int desiredFrameTicks = 1000 / FPS;
+    constexpr int FPS = 60;
+    constexpr int DesiredFrameTicks = 1000 / FPS;
 
     // Entities
-    const int maxEntities = 256;
-    const int maxComponents = 32;
-    const Entity noPlayer = -1;
-    const int maxTextures = 32;
+    constexpr int MaxEntities = 256;
+    constexpr int MaxComponents = 32;
+    constexpr Entity InvalidEntity = -1;
+    constexpr int MaxTextures = 32;
 };

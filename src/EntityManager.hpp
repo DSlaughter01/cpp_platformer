@@ -30,18 +30,18 @@ class EntityManager {
         std::queue<Entity> availableEntityIDs;
 
         // True if an entity is present, false if not
-        std::array<bool, World::maxEntities> m_entities;
+        std::array<bool, World::MaxEntities> m_entities;
 
         // Maps an entity to a vector of its components
-        std::unordered_map<Entity, std::array<std::shared_ptr<Component>, World::maxComponents>> entityComponentMap;
+        std::unordered_map<Entity, std::array<std::shared_ptr<Component>, World::MaxComponents>> entityComponentMap;
 
         // The bitsets signifying the presence (or not) of each component
-        std::array<std::bitset<World::maxComponents>, World::maxEntities> m_entityComponentBitset;
+        std::array<std::bitset<World::MaxComponents>, World::MaxEntities> m_entityComponentBitset;
 
         // Entities that get passed to a system
-        std::bitset<World::maxEntities> renderEntities;
-        std::bitset<World::maxEntities> collisionEntities;
-        std::bitset<World::maxEntities> moveEntities;
+        std::bitset<World::MaxEntities> renderEntities;
+        std::bitset<World::MaxEntities> collisionEntities;
+        std::bitset<World::MaxEntities> moveEntities;
 
     public:
 
@@ -50,10 +50,10 @@ class EntityManager {
         // Entity getters and setters 
         void SetPlayerEntity(Entity e);
         Entity GetPlayerEntity() {return playerEntity;}
-        std::array<bool, World::maxEntities> GetEntities() {return m_entities;}
-        std::bitset<World::maxEntities> GetRenderEntities() {return renderEntities;}
-        std::bitset<World::maxEntities> GetCollisionEntities() {return collisionEntities;}
-        std::bitset<World::maxEntities> GetMoveEntities() {return moveEntities;}
+        std::array<bool, World::MaxEntities> GetEntities() {return m_entities;}
+        std::bitset<World::MaxEntities> GetRenderEntities() {return renderEntities;}
+        std::bitset<World::MaxEntities> GetCollisionEntities() {return collisionEntities;}
+        std::bitset<World::MaxEntities> GetMoveEntities() {return moveEntities;}
 
         // ENTITY FUNCTIONS
         Entity CreateEntity();
@@ -86,7 +86,9 @@ class EntityManager {
 };
 
 
-// Implementation of template function
+/*
+IMPLEMENATION OF TEMPLATE FUNCTIONS
+*/ 
 template<typename T>
 void EntityManager::AddComponent(Entity e, T& component) {
 

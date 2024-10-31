@@ -18,13 +18,12 @@ class RenderSystem : public System {
         RenderSystem(EntityManager &em) : entityManager(em) {}
         
         void Update() override {}
-        void Update(SDL_Renderer* ren, std::bitset<World::maxEntities> &renderEntities,
-                    std::vector<SDL_Texture*> &textureVec);
+        void Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec);
         // void AddTexture(SDL_Texture* tex);
     
     private:
         EntityManager &entityManager;
-        std::array<SDL_Texture*, World::maxTextures> textureArray;
+        std::array<SDL_Texture*, World::MaxTextures> textureArray;
 };
 
 
@@ -32,8 +31,7 @@ class MovementSystem : public System {
     
     public:
         MovementSystem(EntityManager &em) : entityManager(em) {}
-        void Update() override {};
-        void Update(std::bitset<World::maxEntities> &moveEntities);
+        void Update();
 
     private:
         EntityManager &entityManager;
@@ -62,18 +60,18 @@ class CollisionSystem : public System {
     private:
 
         bool anyHorCollisions, anyVertCollisions;
+        std::bitset<World::MaxEntities> collisionEntities;
 
-        std::array<bool, World::maxEntities> entities {};
-        std::array<std::shared_ptr<CTransform>, World::maxEntities> transforms {};
-        std::array<std::shared_ptr<CCollisionState>, World::maxEntities> collStates {};
-        std::array<std::shared_ptr<CVelocity>, World::maxEntities> velocities {};
-        std::array<std::shared_ptr<CLanded>, World::maxEntities> landComps {};
+        std::array<std::shared_ptr<CVelocity>, World::MaxEntities> velocities {};
+
+        const int collIdx = 0;
+        const int tranIdx = 1;
+
+        std::unordered_map<Entity, std::array<std::shared_ptr<Component>, 2>> collisionComponentMap;
 
         EntityManager &entityManager;
 
     private:
-        void GetEntityData();
-        void ResetCollisionVariables();
         void CheckVerticalCollisions();
         void CheckHorizontalCollisions();
         void ResolveHorizontalCollisions();

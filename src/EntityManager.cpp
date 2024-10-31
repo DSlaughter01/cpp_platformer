@@ -2,11 +2,11 @@
 #include "Variables.hpp"
 
 EntityManager::EntityManager() :
-    playerEntity(World::noPlayer) {
+    playerEntity(World::InvalidEntity) {
 
     // Initialise availableEntityIDs
     availableEntityIDs = {};
-    for (Entity e = 0; e < World::maxEntities; e++) 
+    for (Entity e = 0; e < World::MaxEntities; e++) 
         availableEntityIDs.push(e);
 
     // Initialise m_entities
@@ -30,7 +30,7 @@ Entity EntityManager::CreateEntity() {
 
     if (availableEntityIDs.empty()) {
         std::cerr << "No more entities left!!!" << std::endl;
-        return World::noPlayer;
+        return World::InvalidEntity;
     }
 
     // Get an available entity ID
@@ -82,7 +82,7 @@ void EntityManager::RemoveEntity(Entity e) {
 
 void EntityManager::ClearEntities() {
 
-    for (short int e = 0; e < World::maxEntities; e++) {
+    for (short int e = 0; e < World::MaxEntities; e++) {
 
         if (m_entities[e]) {
 
@@ -93,7 +93,7 @@ void EntityManager::ClearEntities() {
         }
     }
 
-    SetPlayerEntity(World::noPlayer);
+    SetPlayerEntity(World::InvalidEntity);
 }
 
 
