@@ -6,6 +6,7 @@ void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureV
 
     std::shared_ptr<CSpritesheet> spritesheet = nullptr;
     std::shared_ptr<CTransform> transform = nullptr;
+    std::shared_ptr<CVelocity> velocity = nullptr;
 
     for (Entity e = 0; e < renderEntities.size(); e++) {
 
@@ -17,8 +18,24 @@ void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureV
             // Render to the screen
             if (spritesheet && transform) {
 
+                SDL_RendererFlip flipVal = (spritesheet->m_dir == spritesheet->m_originalDir) ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;
+
                 SDL_Rect src = {spritesheet->m_currentImageX, 0, spritesheet->m_imageWidth, spritesheet->m_imageHeight};
-                SDL_RenderCopy(ren, textureVec[spritesheet->m_spritesheetID], &src, &(transform->m_rect));
+                SDL_RenderCopyEx(ren, textureVec[spritesheet->m_spritesheetID], &src, &(transform->m_rect), 0, NULL, flipVal);
+
+                // Change spritesheet image, if there is more than one image on the spritesheet and the sprite is moving horizontally but not vertically
+                velocity = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
+
+                bool cond = (velocity &&
+                            velocity->dx != 0 &&
+                            velocity->dy == 0 &&
+                            spritesheet->m_frameDuration != std::nullopt &&
+                            spritesheet->m_framesSinceSpawn % *spritesheet->m_frameDuration);
+
+                if (cond)
+                        spritesheet->m_currentImageX = (spritesheet->m_currentImageX + spritesheet->m_imageWidth) % spritesheet->m_spritesheetWidth;
+
+                spritesheet->m_framesSinceSpawn++;
             }
         }
     }
@@ -41,23 +58,22 @@ void MovementSystem::Update() {
 
             transform = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
             velocity = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
+            spritesheet = entityManager.GetComponent<CSpritesheet>(e, ComponentID::cSpritesheet);
 
             if (transform && velocity) {
 
                 transform->m_rect.x += velocity->dx;
                 transform->m_rect.y += velocity->dy;
 
-                // Change spritesheet image, if there is more than one image on the spritesheet and the sprite is moving
-                spritesheet = entityManager.GetComponent<CSpritesheet>(e, ComponentID::cSpritesheet);
+                // Change the direction spritesheets are rendered
+                if (spritesheet) {
 
-                if (!spritesheet || velocity->dx == 0)
-                    continue;
+                    if (spritesheet->m_dir != Direction::Right && velocity->dx > 0)
+                        spritesheet->m_dir = Direction::Right;
 
-                if (spritesheet->m_frameDuration != std::nullopt) {
-                    if (spritesheet->m_framesSinceSpawn % *spritesheet->m_frameDuration == 0)
-                        spritesheet->m_currentImageX = (spritesheet->m_currentImageX + spritesheet->m_imageWidth) % spritesheet->m_spritesheetWidth;
+                    if (spritesheet->m_dir != Direction::Left && velocity->dx < 0) 
+                        spritesheet->m_dir = Direction::Left;
                 }
-                spritesheet->m_framesSinceSpawn++;
             }
         }
     }
@@ -100,7 +116,6 @@ void InputSystem::Update(const Uint8* keyboard) {
         velocity->dy += World::gravity;
     else if (landed->m_hasLanded)
         velocity->dy = 0;
-
 }
 
 
@@ -156,6 +171,7 @@ void CollisionSystem::Update() {
 void CollisionSystem::CheckVerticalCollisions() {
 
     anyVertCollisions = false;
+    
     std::shared_ptr<CCollisionState> coll1 = nullptr;
     std::shared_ptr<CCollisionState> coll2 = nullptr;
     std::shared_ptr<CTransform> tran1 = nullptr;
@@ -220,6 +236,8 @@ void CollisionSystem::CheckHorizontalCollisions() {
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
 
+    // TODO : Collisions based on tags
+    
     // Do a triangular loop
     for (Entity i = 0; i < World::MaxEntities - 1; i++) {
 

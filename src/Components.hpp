@@ -34,7 +34,13 @@ struct CTag : public Component {
 
 struct CSpritesheet : public Component {
 
-    CSpritesheet(int spritesheetID, int noImages, int spritesheetWidth, int spritesheetHeight, std::optional<int> dir = std::nullopt, std::optional<int> frameDuration = std::nullopt) :
+    CSpritesheet(int spritesheetID, 
+                 int noImages, 
+                 int spritesheetWidth, 
+                 int spritesheetHeight, 
+                 std::optional<Direction> dir = std::nullopt, 
+                 std::optional<Direction> originalDir = std::nullopt, 
+                 std::optional<int> frameDuration = std::nullopt) :
 
         Component(ComponentID::cSpritesheet), 
         m_spritesheetID(spritesheetID),
@@ -42,10 +48,15 @@ struct CSpritesheet : public Component {
         m_spritesheetWidth(spritesheetWidth),
         m_imageHeight(spritesheetHeight),
         m_dir(dir),
+        m_originalDir(originalDir),
         m_frameDuration(frameDuration),
         m_framesSinceSpawn(0),
-        m_currentImageX(0){
+        m_currentImageX(0) {
+            
             m_imageWidth = m_spritesheetWidth / m_noImages;
+
+            if (m_frameDuration != std::nullopt)
+                m_maxFrames = *m_frameDuration * 1000;
         }
 
     // Basic spritesheet info      
@@ -54,12 +65,14 @@ struct CSpritesheet : public Component {
     int m_spritesheetWidth;
 
     // Frame info
-    int m_framesSinceSpawn;
+    short int m_framesSinceSpawn;
+    short int m_maxFrames;
     int m_currentImageX;
     std::optional<int> m_frameDuration;
 
     // Current direction facing - use Direction enum
-    std::optional<int> m_dir;
+    std::optional<Direction> m_dir;
+    std::optional<Direction> m_originalDir;
 
     int m_imageWidth;
     int m_imageHeight;

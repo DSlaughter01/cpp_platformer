@@ -2,7 +2,7 @@
 #include <iostream>
 
 Game::Game() :
-    isRunning(true) {
+    isRunning(true), gui(textureFilenames) {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) 
         std::cerr << "Problem initialising SDL: " << SDL_GetError() << std::endl;
@@ -21,7 +21,7 @@ void Game::LoadPlayer() {
     // Create a player with simple components
     CTransform transform(Player::width * 2, Player::height , Player::width, Player::height);
     CCollisionState collision;
-    CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, 5);
+    CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, Direction::Left, 5);
     CVelocity velocity(true, -3, 0);
     CLanded landed(false);
 
@@ -61,6 +61,11 @@ void Game::LoadTilemap() {
                     // Create the tile with Transform, Spritesheet, and Collision components
                     CTransform transform(x, y, World::TileDim, World::TileDim);
                     CCollisionState collision;
+
+                    int spritesheetID = currentLine[i] - '0' + 2;
+                    
+                    // TODO: Add a tag
+
                     CSpritesheet spritesheet(currentLine[i] - '0' + 2, 1, 18, 18);
 
                     entityManager.AddComponent<CTransform>(e, transform);

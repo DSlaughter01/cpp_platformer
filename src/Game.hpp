@@ -24,13 +24,14 @@ class Game {
             "assets/middle.png",
             "assets/spritesheets/sprite_still.png",
             "assets/tiles/alone_floor.png",
-            "assets/spritesheets/beetle.png"
+            "assets/tiles/coin.png",
+            "assets/spritesheets/beetle.png",
         };
 
-        enum filenameIdx {back, middle, spriteStill, aloneFloor, beetle};
+        enum filenameIdx {back, middle, spriteStill, aloneFloor, coin, beetle};
 
     private:
-        GUI gui = GUI(textureFilenames);
+        GUI gui;
 
         EntityManager entityManager;
         SystemManager systemManager = SystemManager(entityManager);

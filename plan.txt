@@ -13,11 +13,9 @@ And in the component there would be a deduce subtype (can this be done?)
 
 4\ File Game.cpp function GameLoop. Combine LoadPlayer and LoadTilemap and maybe some other info into a LoadGame function
 
-5\ File EntityManager.hpp Why do I have 2 sets and 1 vector in CollideEntities etc.?
+5\ I took out m_maxFrames from the spritesheet, but maybe it could be good to have this to prevent currentframes from getting too big
 
-6\ I took out m_maxFrames from the spritesheet, but maybe it could be good to have this to prevent currentframes from getting too big
-
-
+6\ The flipping of sprites assumes that they are all facing the same way. May need to set a starting direction and then see whether m_dir is different in order to flip or not
 
 Collision detection:
 Assuming for the moment that fixed objects do not have a velocity component, but will come back to that later because it is not robust
