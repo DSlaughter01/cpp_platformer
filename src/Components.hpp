@@ -5,7 +5,8 @@
 
 // Ideas here https://www.reddit.com/r/roguelikedev/comments/b8ozdk/looking_for_a_good_general_list_of_useful_ecs/
 
-using Entity = short int;
+using Entity = uint16_t;
+using CompID = uint16_t;
 
 enum ComponentID {cTag, cTransform, cSpritesheet, cVelocity, cCollisionState,
                   cHealth, cIsAlive, cLanded};
@@ -18,10 +19,10 @@ namespace TagID {
 struct Component {
 
     // Virtual destructor allows polymorphism => dyamic_cast possible
-    Component(short int id) : 
+    Component(CompID id) : 
         componentID(id) {}
     virtual ~Component() = default;
-    short int componentID;
+    CompID componentID;
 };
 
 struct CTag : public Component {

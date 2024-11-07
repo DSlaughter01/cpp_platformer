@@ -10,14 +10,11 @@ EntityManager::EntityManager() :
         availableEntityIDs.push(e);
 
     // Initialise m_entities
-    m_entities.fill(false);
+    m_entities.reset();
 
-    // Reset entityComponentMap
+    // Reset entityComponentMap and entityComponentBitset
     entityComponentMap.clear();
-
-    // Initialise m_entityComponentBitset
-    for (auto &bitset : m_entityComponentBitset) 
-        bitset.reset(); 
+    m_entityComponentBitset.clear();
 
     // System entity vectors
     renderEntities.reset();
@@ -38,10 +35,10 @@ Entity EntityManager::CreateEntity() {
     availableEntityIDs.pop();
 
     // Mark presence of an entity
-    m_entities[e] = true;
+    m_entities.set(e, true);
 
-    // Add entity and an empty component vector to the map
-    entityComponentMap[e].fill(nullptr);
+    // Insert an empty bitset associated with the entity to mark as yet 0 components
+    m_entityComponentBitset.insert({e, World::EmptyComponentBitset});
 
     return e;
 }
@@ -52,7 +49,6 @@ void EntityManager::SetPlayerEntity(Entity e) {
     playerEntity = e;
 }
 
-// TODO : Add a function which tells the user if an entity is active
 
 void EntityManager::RemoveEntity(Entity e) {
 
@@ -68,14 +64,19 @@ void EntityManager::RemoveEntity(Entity e) {
         // Add the entity back onto the available entities queue
         availableEntityIDs.push(e);
 
-        // Reset its bitset
-        m_entityComponentBitset[e].reset();   
-
         // Signify removal in m_entities
-        m_entities[e] = false;
+        m_entities.set(e, false);
 
         // Remove it from the map
-        entityComponentMap.erase(e);
+        for (int i = 0; i < World::MaxComponents; i++) {
+            if (m_entityComponentBitset[e].test(i)) {
+                BinaryKey key = ReturnBinaryKey(e, i);
+                entityComponentMap.erase(key);
+            }
+        }
+
+        // Reset its bitset
+        m_entityComponentBitset.erase(e);   
     }
 }
 
@@ -84,20 +85,19 @@ void EntityManager::ClearEntities() {
 
     for (short int e = 0; e < World::MaxEntities; e++) {
 
-        if (m_entities[e]) {
-
-            m_entities[e] = false;
+        if (m_entities.test(e)) {
+            m_entities.set(e, false);
             availableEntityIDs.push(e);
-            m_entityComponentBitset[e].reset();
-            entityComponentMap.erase(e);
         }
     }
 
+    entityComponentMap.clear();
+    m_entityComponentBitset.clear();
     SetPlayerEntity(World::InvalidEntity);
 }
 
 
-void EntityManager::CheckAddSystemComponents(Entity e, int componentID) {
+void EntityManager::CheckAddSystemComponents(Entity e, CompID componentID) {
 
     // ComponentID is the component that has just been added to entity e
     if (componentID == ComponentID::cTransform) {
@@ -127,7 +127,7 @@ void EntityManager::CheckAddSystemComponents(Entity e, int componentID) {
 }
 
 
-void EntityManager::CheckRemoveSystemComponents(Entity e, int componentID) {
+void EntityManager::CheckRemoveSystemComponents(Entity e, CompID componentID) {
 
     if (componentID == ComponentID::cTransform || componentID == ComponentID::cCollisionState)
         collisionEntities.set(e, false);
@@ -140,10 +140,11 @@ void EntityManager::CheckRemoveSystemComponents(Entity e, int componentID) {
 }
 
 
-bool EntityManager::HasComponent(Entity e, int componentID) {
+bool EntityManager::HasComponent(Entity e, CompID componentID) {
 
-    if (m_entityComponentBitset[e].test(componentID) && entityComponentMap[e][componentID])
-        return true;
-    else    
-        return false;
+    if (e != World::InvalidEntity && m_entities[e]) {
+        if (m_entityComponentBitset[e].test(componentID))
+            return true;
+    }  
+    return false;
 }

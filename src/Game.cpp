@@ -22,7 +22,7 @@ void Game::LoadPlayer() {
     CTransform transform(Player::width * 2, Player::height , Player::width, Player::height);
     CCollisionState collision;
     CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, Direction::Left, 5);
-    CVelocity velocity(true, -3, 0);
+    CVelocity velocity(true, 0, 0);
     CLanded landed(false);
 
     entityManager.AddComponent(e, transform);
@@ -100,13 +100,18 @@ void Game::GameLoop() {
                 break;
             }
         }
-
+        
         systemManager.Update(currentKeyboardState);
         gui.RenderScreen(systemManager);
-
+ 
         // Control frame rate
         frameEnd = SDL_GetTicks64();
-        if (frameEnd - frameStart < World::DesiredFrameTicks)
+
+        int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
+        std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
+
+        if (frameEnd - frameStart < World::DesiredFrameTicks) {
             SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
+        }
     }
 }

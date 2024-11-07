@@ -1,6 +1,7 @@
 #pragma once 
+#include <math.h>
 
-using Entity = short int;
+using Entity = uint16_t;
 
 namespace Player {
 
@@ -31,8 +32,11 @@ namespace World {
     constexpr int DesiredFrameTicks = 1000 / FPS;
 
     // Entities
-    constexpr int MaxEntities = 256;
+    constexpr Entity MaxEntities = 256;
     constexpr int MaxComponents = 32;
+    constexpr std::bitset<World::MaxEntities> EmptyEntityBitset;
+    constexpr std::bitset<World::MaxComponents> EmptyComponentBitset;
     constexpr Entity InvalidEntity = -1;
+
     constexpr int MaxTextures = 32;
 };

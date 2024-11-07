@@ -83,6 +83,8 @@ void MovementSystem::Update() {
 void InputSystem::Update(const Uint8* keyboard) {
 
     Entity player = entityManager.GetPlayerEntity();
+    if (player == World::InvalidEntity)
+        return;
 
     std::shared_ptr<CVelocity> velocity = entityManager.GetComponent<CVelocity>(player, ComponentID::cVelocity);
     std::shared_ptr<CLanded> landed = entityManager.GetComponent<CLanded>(player, ComponentID::cLanded);

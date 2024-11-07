@@ -17,9 +17,11 @@
 #include <algorithm>
 #include <utility>
 
-// https://medium.com/@savas/nomad-game-engine-part-3-the-big-picture-743cec145685
+using Entity = uint16_t;
+using CompID = uint16_t;
+using BinaryKey = uint32_t;
 
-using Entity = short int;
+// Creating a binary key for entityComponentMap with sufficient space for unique IDs in a flat map
 
 class EntityManager {
 
@@ -30,13 +32,13 @@ class EntityManager {
         std::queue<Entity> availableEntityIDs;
 
         // True if an entity is present, false if not
-        std::array<bool, World::MaxEntities> m_entities;
+        std::bitset<World::MaxEntities> m_entities;
 
-        // Maps an entity to a vector of its components
-        std::unordered_map<Entity, std::array<std::shared_ptr<Component>, World::MaxComponents>> entityComponentMap;
+        // Maps an entity to a vector of its components - the key is a pair of Entity, componentID (short int)
+        std::unordered_map<BinaryKey, std::shared_ptr<Component>> entityComponentMap;
 
-        // The bitsets signifying the presence (or not) of each component
-        std::array<std::bitset<World::MaxComponents>, World::MaxEntities> m_entityComponentBitset;
+        // The bitsets signifying the presence (or not) of each component in active entities
+        std::unordered_map<Entity, std::bitset<World::MaxComponents>> m_entityComponentBitset;
 
         // Entities that get passed to a system
         std::bitset<World::MaxEntities> renderEntities;
@@ -47,10 +49,14 @@ class EntityManager {
 
         EntityManager();
 
+        inline BinaryKey ReturnBinaryKey(Entity entity, CompID componentID) {
+            return (static_cast<BinaryKey>(entity) << 8) | componentID;
+        }
+
         // Entity getters and setters 
         void SetPlayerEntity(Entity e);
         Entity GetPlayerEntity() {return playerEntity;}
-        std::array<bool, World::MaxEntities> GetEntities() {return m_entities;}
+        std::bitset<World::MaxEntities> GetEntities() {return m_entities;}
         std::bitset<World::MaxEntities> GetRenderEntities() {return renderEntities;}
         std::bitset<World::MaxEntities> GetCollisionEntities() {return collisionEntities;}
         std::bitset<World::MaxEntities> GetMoveEntities() {return moveEntities;}
@@ -69,20 +75,20 @@ class EntityManager {
 
         // Removes a component from the specified entity, updating other structures holding entity/component data
         template<typename T>
-        void RemoveComponent(Entity e, int componentID);
+        void RemoveComponent(Entity e, CompID componentID);
 
         // Checks whether an entity has that component
-        bool HasComponent(Entity e, int componentID);
+        bool HasComponent(Entity e, CompID componentID);
 
         // Returns a pointer to a component, so that it can then be used
         template<typename T>
-        std::shared_ptr<T> GetComponent(Entity e, int componentID);
+        std::shared_ptr<T> GetComponent(Entity e, CompID componentID);
 
         // Checks whether entities should be added to vectors to be passed to individual systems
-        void CheckAddSystemComponents(Entity e, int componentID);
+        void CheckAddSystemComponents(Entity e, CompID componentID);
 
         // Checks whether removing a component makes them ineligible to be passed to a system
-        void CheckRemoveSystemComponents(Entity e, int componentID);
+        void CheckRemoveSystemComponents(Entity e, CompID componentID);
 };
 
 
@@ -92,12 +98,12 @@ IMPLEMENATION OF TEMPLATE FUNCTIONS
 template<typename T>
 void EntityManager::AddComponent(Entity e, T& component) {
 
-    std::shared_ptr<T> comp = std::make_shared<T>(component);
-
-    if (!m_entities[e]) {
+    if (e == World::InvalidEntity || !m_entities[e]) {
         std::cerr << "Trying to access an Entity that doesn't exist." << std::endl;
         return;
     }
+
+    std::shared_ptr<T> comp = std::make_shared<T>(component);
 
     // See if a component of that type has already been added
     if (HasComponent(e, comp->componentID)) {
@@ -106,37 +112,42 @@ void EntityManager::AddComponent(Entity e, T& component) {
     }
 
     m_entityComponentBitset[e].set(comp->componentID);
-    entityComponentMap[e][comp->componentID] = comp;  
+    BinaryKey key = ReturnBinaryKey(e, comp->componentID);
+    entityComponentMap.insert({key, comp});  
 
     CheckAddSystemComponents(e, comp->componentID);
 }
 
 
 template<typename T>
-std::shared_ptr<T> EntityManager::GetComponent(Entity e, int componentID) {
+std::shared_ptr<T> EntityManager::GetComponent(Entity e, CompID componentID) {
 
-    if (HasComponent(e, componentID))
-        return std::dynamic_pointer_cast<T>(entityComponentMap[e][componentID]);
-    else
+    if (e == World::InvalidEntity || !HasComponent(e, componentID)) 
         return nullptr;
+
+    else {
+        BinaryKey key = ReturnBinaryKey(e, componentID);
+        return std::dynamic_pointer_cast<T>(entityComponentMap[key]);
+    }
 }
 
 
 template<typename T>
-void EntityManager::RemoveComponent(Entity e, int componentID) {
+void EntityManager::RemoveComponent(Entity e, CompID componentID) {
 
-    if (!m_entities[e]) {
+    if (e == World::InvalidEntity || !m_entities[e]) {
         std::cerr << "Trying to access an Entity that doesn't exist." << std::endl;
         return;
     }
 
-    if (!entityComponentMap[e][componentID]) {
+    if (!HasComponent(e, componentID)) {
         std::cout << "Entity " << e << " doesn't have component " << componentID << "." << std::endl;
         return;
     }
 
     m_entityComponentBitset[e].reset(componentID);
-    entityComponentMap[e][componentID] = nullptr;
+    BinaryKey key = ReturnBinaryKey(e, componentID);
+    entityComponentMap.erase(key);
 
     CheckRemoveSystemComponents(e, componentID);
 }
