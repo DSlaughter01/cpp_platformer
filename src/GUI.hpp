@@ -10,18 +10,26 @@
 class GUI {
 
     public:
+
         GUI() = default;
         GUI(std::vector<std::string> &textureFilenames);
         ~GUI();
         void LoadTextures();
-        void RenderScreen(SystemManager &systemManager);
+        void RenderScreen(SystemManager &systemManager, int &xOffset);
+        void RenderBackground(int &xOffset);
+        int GetWindowWidth() {return windowWidth;}
+        void SetBackMidRenderTimes(int levelWidth);
+
+    private:
+
 
     private:
 
         const int backImgIdx = 0;
         const int middleImgIdx = 1;
 
-        int windowWidth, windowHeight;
+        int windowWidth;
+        int windowHeight;
 
         SDL_Window* window;
         SDL_Renderer* renderer;
@@ -30,6 +38,11 @@ class GUI {
         SDL_Texture* middleTex;
 
         SDL_Rect backgroundDest;
+        SDL_Rect middleDest;
+
+        // Number of times the background needs to be rendered in order to cover the level
+        int backRenderTimes;
+        int midRenderTimes;
 
         std::vector<std::string> m_textureFilenames;
         std::vector<SDL_Texture*> textureVector;

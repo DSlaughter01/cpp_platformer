@@ -1,42 +1,62 @@
 #include "Systems.hpp" 
 
-void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec) {
+void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec, int &xOffset) {
 
-    std::bitset<World::MaxEntities> renderEntities = entityManager.GetRenderEntities();
+    renderEntities = entityManager.GetRenderEntities();
 
-    std::shared_ptr<CSpritesheet> spritesheet = nullptr;
     std::shared_ptr<CTransform> transform = nullptr;
     std::shared_ptr<CVelocity> velocity = nullptr;
+    std::shared_ptr<CSpritesheet> spritesheet = nullptr;
+
+    // To refactor after - update xOffset according to player position
+    Entity player = entityManager.GetPlayerEntity();
+    transform = entityManager.GetComponent<CTransform>(player, ComponentID::cTransform);
+
+    int diff {};
+
+    if (transform->m_rect.x + transform->m_rect.w - xOffset > World::rightScroll &&
+        transform->m_rect.x + transform->m_rect.w < World::levelWidth - (World::WindowWidth - World::rightScroll)) {
+
+        diff = World::rightScroll - (transform->m_rect.x + transform->m_rect.w - xOffset);
+        xOffset -= diff;
+    }
+
+    else if (transform->m_rect.x - xOffset < World::leftScroll &&
+             transform->m_rect.x > World::leftScroll) {
+
+        diff = World::leftScroll - (transform->m_rect.x - xOffset);
+        xOffset -= diff;
+    }
+
+    transform = nullptr;
 
     for (Entity e = 0; e < renderEntities.size(); e++) {
 
-        if (renderEntities[e]) {
+        spritesheet = entityManager.GetComponent<CSpritesheet>(renderEntities[e], ComponentID::cSpritesheet);
+        transform = entityManager.GetComponent<CTransform>(renderEntities[e], ComponentID::cTransform);
 
-            spritesheet = entityManager.GetComponent<CSpritesheet>(e, ComponentID::cSpritesheet);
-            transform = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
+        // Render to the screen
+        if (spritesheet && transform) {   
 
-            // Render to the screen
-            if (spritesheet && transform) {
+            SDL_RendererFlip flipVal = (spritesheet->m_dir == spritesheet->m_originalDir) ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;
 
-                SDL_RendererFlip flipVal = (spritesheet->m_dir == spritesheet->m_originalDir) ? SDL_FLIP_NONE : SDL_FLIP_HORIZONTAL;
+            SDL_Rect src = {spritesheet->m_currentImageX, 0, spritesheet->m_imageWidth, spritesheet->m_imageHeight};
+            SDL_Rect dest = {transform->m_rect.x - xOffset, transform->m_rect.y, transform->m_rect.w, transform->m_rect.h};
+            SDL_RenderCopyEx(ren, textureVec[spritesheet->m_spritesheetID], &src, &dest, 0, NULL, flipVal);
 
-                SDL_Rect src = {spritesheet->m_currentImageX, 0, spritesheet->m_imageWidth, spritesheet->m_imageHeight};
-                SDL_RenderCopyEx(ren, textureVec[spritesheet->m_spritesheetID], &src, &(transform->m_rect), 0, NULL, flipVal);
+            // Change spritesheet image, if there is more than one image on the spritesheet and the sprite is moving horizontally but not vertically
+            velocity = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
 
-                // Change spritesheet image, if there is more than one image on the spritesheet and the sprite is moving horizontally but not vertically
-                velocity = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
+            bool cond = (velocity &&
+                        velocity->dx != 0 &&
+                        velocity->dy == 0 &&
+                        spritesheet->m_frameDuration != std::nullopt &&
+                        spritesheet->m_framesSinceSpawn % *spritesheet->m_frameDuration);
 
-                bool cond = (velocity &&
-                            velocity->dx != 0 &&
-                            velocity->dy == 0 &&
-                            spritesheet->m_frameDuration != std::nullopt &&
-                            spritesheet->m_framesSinceSpawn % *spritesheet->m_frameDuration);
+            if (cond)
+                    spritesheet->m_currentImageX = (spritesheet->m_currentImageX + spritesheet->m_imageWidth) % spritesheet->m_spritesheetWidth;
 
-                if (cond)
-                        spritesheet->m_currentImageX = (spritesheet->m_currentImageX + spritesheet->m_imageWidth) % spritesheet->m_spritesheetWidth;
-
-                spritesheet->m_framesSinceSpawn++;
-            }
+            spritesheet->m_framesSinceSpawn++;
         }
     }
 }
@@ -44,7 +64,7 @@ void RenderSystem::Update(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureV
 
 void MovementSystem::Update() {
 
-    std::bitset<World::MaxEntities> moveEntities = entityManager.GetMoveEntities();
+    moveEntities = entityManager.GetMoveEntities();
 
     // Get the transform and velocity components
     std::shared_ptr<CTransform> transform = nullptr;
@@ -52,28 +72,25 @@ void MovementSystem::Update() {
     std::shared_ptr<CSpritesheet> spritesheet = nullptr;
 
     // Move the transform components by the velocity
-    for (Entity e = 0; e < World::MaxEntities; e++) {
-        
-        if (moveEntities[e]) {
+    for (Entity e = 0; e < moveEntities.size(); e++) {
 
-            transform = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
-            velocity = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
-            spritesheet = entityManager.GetComponent<CSpritesheet>(e, ComponentID::cSpritesheet);
+        transform = entityManager.GetComponent<CTransform>(moveEntities[e], ComponentID::cTransform);
+        velocity = entityManager.GetComponent<CVelocity>(moveEntities[e], ComponentID::cVelocity);
+        spritesheet = entityManager.GetComponent<CSpritesheet>(moveEntities[e], ComponentID::cSpritesheet);
 
-            if (transform && velocity) {
+        if (transform && velocity) {
 
-                transform->m_rect.x += velocity->dx;
-                transform->m_rect.y += velocity->dy;
+            transform->m_rect.x += velocity->dx;
+            transform->m_rect.y += velocity->dy;
 
-                // Change the direction spritesheets are rendered
-                if (spritesheet) {
+            // Change the direction spritesheets are rendered
+            if (spritesheet) {
 
-                    if (spritesheet->m_dir != Direction::Right && velocity->dx > 0)
-                        spritesheet->m_dir = Direction::Right;
+                if (spritesheet->m_dir != Direction::Right && velocity->dx > 0)
+                    spritesheet->m_dir = Direction::Right;
 
-                    if (spritesheet->m_dir != Direction::Left && velocity->dx < 0) 
-                        spritesheet->m_dir = Direction::Left;
-                }
+                if (spritesheet->m_dir != Direction::Left && velocity->dx < 0) 
+                    spritesheet->m_dir = Direction::Left;
             }
         }
     }
@@ -83,10 +100,12 @@ void MovementSystem::Update() {
 void InputSystem::Update(const Uint8* keyboard) {
 
     Entity player = entityManager.GetPlayerEntity();
+
     if (player == World::InvalidEntity)
         return;
 
     std::shared_ptr<CVelocity> velocity = entityManager.GetComponent<CVelocity>(player, ComponentID::cVelocity);
+    std::shared_ptr<CTransform> transform = entityManager.GetComponent<CTransform>(player, ComponentID::cTransform);
     std::shared_ptr<CLanded> landed = entityManager.GetComponent<CLanded>(player, ComponentID::cLanded);
 
     if (!velocity) {
@@ -95,10 +114,12 @@ void InputSystem::Update(const Uint8* keyboard) {
     } 
 
     // Move horizontally if uninhibited by other collidable objects
-    if (keyboard[SDL_SCANCODE_LEFT])
+    if (keyboard[SDL_SCANCODE_LEFT] && transform->m_rect.x >= Player::maxDX) {
         velocity->dx = -Player::maxDX;
-    else if (keyboard[SDL_SCANCODE_RIGHT]) 
+    }
+    else if (keyboard[SDL_SCANCODE_RIGHT] && transform->m_rect.x + transform->m_rect.w <= World::levelWidth - Player::maxDX) {
         velocity->dx = Player::maxDX;
+    }
     else
         velocity->dx = 0;
 
@@ -129,35 +150,25 @@ void CollisionSystem::Update() {
     std::shared_ptr<CCollisionState> coll = nullptr;
     std::shared_ptr<CLanded> land = nullptr;
 
-    std::array<std::shared_ptr<Component>, 2> val {};
+    for (Entity e = 0; e < collisionEntities.size(); e++) {
 
-    for (Entity e = 0; e < World::MaxEntities; e++) {
+        coll = entityManager.GetComponent<CCollisionState>(e, ComponentID::cCollisionState);
+        tran = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
+        land = entityManager.GetComponent<CLanded>(e, ComponentID::cLanded);
 
-        if (collisionEntities[e]) {
+        coll->isCollidingLeft = false;
+        coll->isCollidingRight = false;
+        coll->isCollidingUp = false;
+        coll->isCollidingDown = false;
+        coll->horCollWith.clear();
+        coll->vertCollWith.clear();
 
-            coll = entityManager.GetComponent<CCollisionState>(e, ComponentID::cCollisionState);
-            tran = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
-            land = entityManager.GetComponent<CLanded>(e, ComponentID::cLanded);
+        velocities[e] = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
 
-            coll->isCollidingLeft = false;
-            coll->isCollidingRight = false;
-            coll->isCollidingUp = false;
-            coll->isCollidingDown = false;
-            coll->horCollWith.clear();
-            coll->vertCollWith.clear();
-
-            val = {coll, tran};
-            collisionComponentMap.insert({e, val});
-
-            velocities[e] = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
-
-            if (land) {
-                land->m_hasLanded = false;
-            }
-        }
+        if (land)
+            land->m_hasLanded = false;
     }
 
-    
     CheckVerticalCollisions();
     
     if (anyVertCollisions)
@@ -178,20 +189,18 @@ void CollisionSystem::CheckVerticalCollisions() {
     std::shared_ptr<CCollisionState> coll2 = nullptr;
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
+    std::shared_ptr<CVelocity> vel = nullptr;
 
     // Do a triangular loop
-    for (Entity i = 0; i < World::MaxEntities - 1; i++) {
+    for (Entity i = 0; i < collisionEntities.size() - 1; i++) {
 
-        coll1 = std::dynamic_pointer_cast<CCollisionState>(collisionComponentMap[i][collIdx]);
-        tran1 = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[i][tranIdx]);
+        coll1 = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState);
+        tran1 = entityManager.GetComponent<CTransform>(collisionEntities[i], ComponentID::cTransform);
 
-        for (Entity j = i + 1; j < World::MaxEntities; j++) {
-
-            if (!collisionEntities[j]) 
-                continue;
+        for (Entity j = i + 1; j < collisionEntities.size(); j++) {
                 
-            coll2 = std::dynamic_pointer_cast<CCollisionState>(collisionComponentMap[j][collIdx]);
-            tran2 = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[j][tranIdx]);
+            coll2 = entityManager.GetComponent<CCollisionState>(collisionEntities[j], ComponentID::cCollisionState);
+            tran2 = entityManager.GetComponent<CTransform>(collisionEntities[j], ComponentID::cTransform);
 
             const SDL_Rect rect1 = tran1->m_rect;
             const SDL_Rect rect2 = tran2->m_rect;
@@ -241,21 +250,15 @@ void CollisionSystem::CheckHorizontalCollisions() {
     // TODO : Collisions based on tags
     
     // Do a triangular loop
-    for (Entity i = 0; i < World::MaxEntities - 1; i++) {
+    for (Entity i = 0; i < collisionEntities.size() - 1; i++) {
 
-        if (!collisionEntities[i])
-            continue;
+        coll1 = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState);
+        tran1 = entityManager.GetComponent<CTransform>(collisionEntities[i], ComponentID::cTransform);
 
-        coll1 = std::dynamic_pointer_cast<CCollisionState>(collisionComponentMap[i][collIdx]);
-        tran1 = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[i][tranIdx]);
-
-        for (Entity j = i + 1; j < World::MaxEntities; j++) {
-
-            if (!collisionEntities[j])
-                continue;
-
-            coll2 = std::dynamic_pointer_cast<CCollisionState>(collisionComponentMap[j][collIdx]);
-            tran2 = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[j][tranIdx]);
+        for (Entity j = i + 1; j < collisionEntities.size(); j++) {
+                
+            coll2 = entityManager.GetComponent<CCollisionState>(collisionEntities[j], ComponentID::cCollisionState);
+            tran2 = entityManager.GetComponent<CTransform>(collisionEntities[j], ComponentID::cTransform);
 
             const SDL_Rect rect1 = tran1->m_rect;
             const SDL_Rect rect2 = tran2->m_rect;
@@ -301,10 +304,7 @@ void CollisionSystem::ResolveHorizontalCollisions() {
     // Move the object out of the way
     for (Entity i = 0; i < World::MaxEntities; i++) {
 
-        if (!collisionEntities[i])
-            continue;
-
-        std::unordered_map<Entity, Direction> horColls = (std::dynamic_pointer_cast<CCollisionState>(collisionComponentMap[i][collIdx]))->horCollWith;
+        std::unordered_map<Entity, Direction> horColls = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState)->horCollWith;
 
         // For each entity that Entity i is colliding with
         for (auto &ent : horColls) {
@@ -312,8 +312,8 @@ void CollisionSystem::ResolveHorizontalCollisions() {
             Entity left = (ent.second == Direction::Right) ? i : ent.first;
             Entity right = (left == i) ? ent.first : i;
 
-            leftTran = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[left][tranIdx]);
-            rightTran = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[right][tranIdx]);
+            leftTran = entityManager.GetComponent<CTransform>(left, ComponentID::cTransform);
+            rightTran = entityManager.GetComponent<CTransform>(right, ComponentID::cTransform);
 
             // Fixed objects may not have a velocity component
             if (!velocities[right]) {    // Left object moving
@@ -371,7 +371,7 @@ void CollisionSystem::ResolveVerticalCollisions() {
 
         if (collisionEntities[i] && velocities[i]) {
 
-            std::unordered_map<Entity, Direction> vertColls = (std::dynamic_pointer_cast<CCollisionState>(collisionComponentMap[i][collIdx]))->vertCollWith;
+            std::unordered_map<Entity, Direction> vertColls = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState)->vertCollWith;
             
             // For each entity that Entity i is colliding with
             for (auto &ent : vertColls) {
@@ -379,8 +379,8 @@ void CollisionSystem::ResolveVerticalCollisions() {
                 Entity top = (ent.second == Direction::Down) ? i : ent.first;
                 Entity bottom = (top == i) ? ent.first : i;
 
-                topTran = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[top][tranIdx]);
-                bottomTran = std::dynamic_pointer_cast<CTransform>(collisionComponentMap[bottom][tranIdx]);
+                topTran = entityManager.GetComponent<CTransform>(top, ComponentID::cTransform);
+                bottomTran = entityManager.GetComponent<CTransform>(bottom, ComponentID::cTransform);
 
                 std::shared_ptr<CLanded> land = entityManager.GetComponent<CLanded>(top, ComponentID::cLanded);
 

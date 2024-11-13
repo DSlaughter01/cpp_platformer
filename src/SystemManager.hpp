@@ -23,11 +23,10 @@ class SystemManager {
 
             inputSystem.Update(currentKeyboardState);
             movementSystem.Update();
-            collisionSystem.Update();     
+            collisionSystem.Update();  
         }
 
-        void Draw(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec) {
-            std::bitset<World::MaxEntities> renderEntities = entityManager.GetRenderEntities();
-            renderSystem.Update(ren, textureVec);
+        void Draw(SDL_Renderer* ren, std::vector<SDL_Texture*> &textureVec, int &xOffset) {
+            renderSystem.Update(ren, textureVec, xOffset);
         }
 };

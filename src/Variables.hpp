@@ -27,6 +27,11 @@ namespace World {
     constexpr int WindowWidth = 900;
     constexpr int TileDim = 64;
 
+    // Level information for scrolling, to be updated according to the map in Game::LoadTilemap
+    inline int levelWidth;
+    inline int leftScroll = (World::WindowWidth) / 8;
+    inline int rightScroll = (World::WindowWidth * 7) / 8;
+
     // Time spacing
     constexpr int FPS = 60;
     constexpr int DesiredFrameTicks = 1000 / FPS;

@@ -41,9 +41,9 @@ class EntityManager {
         std::unordered_map<Entity, std::bitset<World::MaxComponents>> m_entityComponentBitset;
 
         // Entities that get passed to a system
-        std::bitset<World::MaxEntities> renderEntities;
-        std::bitset<World::MaxEntities> collisionEntities;
-        std::bitset<World::MaxEntities> moveEntities;
+        std::vector<Entity> renderEntities;
+        std::vector<Entity> collisionEntities;
+        std::vector<Entity> moveEntities;
 
     public:
 
@@ -57,9 +57,9 @@ class EntityManager {
         void SetPlayerEntity(Entity e);
         Entity GetPlayerEntity() {return playerEntity;}
         std::bitset<World::MaxEntities> GetEntities() {return m_entities;}
-        std::bitset<World::MaxEntities> GetRenderEntities() {return renderEntities;}
-        std::bitset<World::MaxEntities> GetCollisionEntities() {return collisionEntities;}
-        std::bitset<World::MaxEntities> GetMoveEntities() {return moveEntities;}
+        std::vector<Entity> GetRenderEntities() {return renderEntities;}
+        std::vector<Entity> GetCollisionEntities() {return collisionEntities;}
+        std::vector<Entity> GetMoveEntities() {return moveEntities;}
 
         // ENTITY FUNCTIONS
         Entity CreateEntity();
@@ -80,7 +80,7 @@ class EntityManager {
         // Checks whether an entity has that component
         bool HasComponent(Entity e, CompID componentID);
 
-        // Returns a pointer to a component, so that it can then be used
+        // Returns a pointer to a component, so that it can then be used or modified as appropriate
         template<typename T>
         std::shared_ptr<T> GetComponent(Entity e, CompID componentID);
 

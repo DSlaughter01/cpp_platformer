@@ -13,7 +13,7 @@ class Game {
 
         void GameLoop();
 
-    private:
+    private: 
         void LoadTilemap();
         void LoadPlayer();
 
@@ -31,6 +31,7 @@ class Game {
         enum filenameIdx {back, middle, spriteStill, aloneFloor, coin, beetle};
 
     private:
+
         GUI gui;
 
         EntityManager entityManager;

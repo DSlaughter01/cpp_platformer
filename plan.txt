@@ -1,42 +1,22 @@
 TODO NEXT:
-Collision system following the steps on chatgpt
+Implement scrolling screen:
+
+    In the game, this requires a variable (int) called screenScrollX
+    This should also have a function called SetScreenScroll();
+    When the player moves past a certain point on the screen (7/8 of screen width to the right, or 1/8 of screen width to left), screenScrollX is increased or decreased
+    In the GUI, the renderScreen function has to take screenScrollX as an argument
+    The back and middle ground have to be rendered enough times to cover the whole level
+    The background should move slower than everything else (1/4 speed)
+    The Systems also have to take this into account - specifically in InputSystem
+    The transforms' x position has to be moved by the screen scroll (for every entity)
 
 Comments:
-1\ File Game.cpp, function LoadPlayer. Maybe there is a way to just get the component type and add the component within the function and use it like em.addComponent(e, velocity). Then inside it would be:
-    type = arg1.GetComponent();
-
-And in the component there would be a deduce subtype (can this be done?)
 
 2\ File EntityManager.cpp function GetComponent. It would be good to be able to add multiple components at the same time
 
-3\ File Game.cpp function LoadTilemap. Remove 64 and add TILE_DIM (= 64)
-
 4\ File Game.cpp function GameLoop. Combine LoadPlayer and LoadTilemap and maybe some other info into a LoadGame function
-
-5\ I took out m_maxFrames from the spritesheet, but maybe it could be good to have this to prevent currentframes from getting too big
 
 6\ The flipping of sprites assumes that they are all facing the same way. May need to set a starting direction and then see whether m_dir is different in order to flip or not
 
 Collision detection:
 Assuming for the moment that fixed objects do not have a velocity component, but will come back to that later because it is not robust
-
-
-
-Adding components to systems to be rendered etc.
-Collision system required an unordered map
-
-In the EntityManager, how do I store the entities which have:
-    collision components (collisionState and transform)
-    rendering components (transform and spritesheet)
-    moving components (transform and velocity)?
-Comparatively few have landed, and this isn't necessary. Velocity is useful, but again not necessary
-To use this in the system functions, I could just use a vector of entities, and then use GetComponent for each
-When a component is added, there is a check to see whether any of the other components exist.
-Once all the components exist, the entity gets added to one of the system vectors
-
-e.g. std::vector<Entity> renderEntities;
-
-Then the correct entities would get passed to the render system, etc.
-
-I still don't quite understand how to destroy the actual component in the game
-The game creates a component and then creates a pointer to it, but when this pointer is removed from the array, where does the actual component go?

@@ -1,0 +1,43 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "Build Project with SDL2",
+            "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                // Include all .cpp files in your project
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/Game.cpp",
+                "${workspaceFolder}/src/GUI.cpp",
+                "${workspaceFolder}/src/EntityManager.cpp",
+                "${workspaceFolder}/src/Systems.cpp",
+                
+                // Specify the output executable
+                "-o", "${workspaceFolder}/build/main.exe",
+
+                // Add the include directory for SDL2 headers
+                "-I", "${workspaceFolder}/include",
+
+                // Link SDL2 libraries
+                "-L", "${workspaceFolder}/lib", 
+                "-lSDL2main", 
+                "-lSDL2",
+                "-lSDL2_image"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Build task for the entire project including SDL2 support"
+        }
+    ],
+    "version": "2.0.0"
+}

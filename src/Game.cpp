@@ -17,8 +17,8 @@ Game::~Game() {
 void Game::LoadPlayer() {
 
     Entity e = entityManager.CreateEntity();
+    entityManager.SetPlayerEntity(e);
 
-    // Create a player with simple components
     CTransform transform(Player::width * 2, Player::height , Player::width, Player::height);
     CCollisionState collision;
     CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, Direction::Left, 5);
@@ -30,8 +30,6 @@ void Game::LoadPlayer() {
     entityManager.AddComponent(e, spritesheet);
     entityManager.AddComponent(e, velocity);
     entityManager.AddComponent(e, landed);
-
-    entityManager.SetPlayerEntity(e);
 }
 
 
@@ -42,6 +40,7 @@ void Game::LoadTilemap() {
 
     tilemapFile.open("src/level1.txt");
     int line = 0;
+    int levelWidth = 0;
 
     if (tilemapFile.is_open()) {
         
@@ -55,6 +54,9 @@ void Game::LoadTilemap() {
 
                     int x = i * World::TileDim;
                     int y = line * World::TileDim;
+
+                    if (x > levelWidth)
+                        levelWidth = x;
 
                     Entity e = entityManager.CreateEntity();
 
@@ -76,8 +78,11 @@ void Game::LoadTilemap() {
             line++;
         }
     }
+    World::levelWidth = levelWidth;
+    gui.SetBackMidRenderTimes(levelWidth);
     tilemapFile.close();
 }
+
 
 void Game::GameLoop() {
 
@@ -86,6 +91,8 @@ void Game::GameLoop() {
 
     LoadTilemap();
     LoadPlayer();
+
+    int xOffset = 0;
 
     const Uint8 *currentKeyboardState = SDL_GetKeyboardState(NULL);
 
@@ -99,16 +106,15 @@ void Game::GameLoop() {
                 isRunning = false;
                 break;
             }
-        }
-        
+        }        
         systemManager.Update(currentKeyboardState);
-        gui.RenderScreen(systemManager);
+        gui.RenderScreen(systemManager, xOffset);
  
         // Control frame rate
         frameEnd = SDL_GetTicks64();
 
-        int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
-        std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
+        //int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
+        //std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
 
         if (frameEnd - frameStart < World::DesiredFrameTicks) {
             SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
