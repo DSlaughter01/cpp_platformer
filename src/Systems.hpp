@@ -3,6 +3,7 @@
 #include <map>
 #include "Variables.hpp"
 #include "SDL2/SDL.h"
+#include "QuadTree.hpp"
 
 class System {
 
@@ -54,10 +55,12 @@ class InputSystem : public System {
 };
 
 
+// https://research.ncl.ac.uk/game/mastersdegree/gametechnologies/physicstutorials/6accelerationstructures/Physics%20-%20Spatial%20Acceleration%20Structures.pdf
+
 class CollisionSystem : public System {
 
     public:
-        CollisionSystem(EntityManager &em) : entityManager(em),
+        CollisionSystem(EntityManager &em) : entityManager(em), quadTree(em, 10),
         anyHorCollisions(false), anyVertCollisions(false), collisionEntities({}) {}
         void Update() override;
 
@@ -65,6 +68,9 @@ class CollisionSystem : public System {
 
         bool anyHorCollisions, anyVertCollisions;
         std::vector<Entity> collisionEntities;
+        std::vector<Entity> newCollisionEntities;
+        std::vector<Entity> removedCollisionEntities;
+
 
         std::array<std::shared_ptr<CVelocity>, World::MaxEntities> velocities {};
 
@@ -72,6 +78,7 @@ class CollisionSystem : public System {
         const int tranIdx = 1;
 
         EntityManager &entityManager;
+        QuadTree quadTree;
 
     private:
         void CheckVerticalCollisions();

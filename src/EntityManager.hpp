@@ -45,6 +45,10 @@ class EntityManager {
         std::vector<Entity> collisionEntities;
         std::vector<Entity> moveEntities;
 
+        // These 2 are to be passed to the QuadTree's update function
+        std::vector<Entity> newCollisionEntities;
+        std::vector<Entity> removedCollisionEntities;
+
     public:
 
         EntityManager();
@@ -59,6 +63,8 @@ class EntityManager {
         std::bitset<World::MaxEntities> GetEntities() {return m_entities;}
         std::vector<Entity> GetRenderEntities() {return renderEntities;}
         std::vector<Entity> GetCollisionEntities() {return collisionEntities;}
+        std::vector<Entity> GetNewCollisionEntities() {return newCollisionEntities;}
+        std::vector<Entity> GetRemovedCollisionEntities() {return removedCollisionEntities;}
         std::vector<Entity> GetMoveEntities() {return moveEntities;}
 
         // ENTITY FUNCTIONS

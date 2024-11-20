@@ -20,6 +20,8 @@ EntityManager::EntityManager() :
     renderEntities.clear();
     moveEntities.clear();
     collisionEntities.clear();
+    newCollisionEntities.clear();
+    removedCollisionEntities.clear();
 }
 
 
@@ -105,6 +107,7 @@ void EntityManager::CheckAddSystemComponents(Entity e, CompID componentID) {
         // Transform and CollisionState needed to collide
         if (HasComponent(e, ComponentID::cCollisionState)) {
             collisionEntities.emplace_back(e);
+            newCollisionEntities.emplace_back(e);
         }
         // Transform and Spritesheet needed to render
         if (HasComponent(e, ComponentID::cSpritesheet)) {
@@ -115,8 +118,10 @@ void EntityManager::CheckAddSystemComponents(Entity e, CompID componentID) {
     else if (componentID == ComponentID::cVelocity && HasComponent(e, ComponentID::cTransform))
             moveEntities.emplace_back(e);
 
-    else if (componentID == ComponentID::cCollisionState && HasComponent(e, ComponentID::cTransform))
+    else if (componentID == ComponentID::cCollisionState && HasComponent(e, ComponentID::cTransform)) {
             collisionEntities.emplace_back(e);
+            newCollisionEntities.emplace_back(e);
+    }
 
     else if (componentID == ComponentID::cSpritesheet && HasComponent(e, ComponentID::cTransform))
             renderEntities.emplace_back(e);
@@ -129,8 +134,10 @@ void EntityManager::CheckRemoveSystemComponents(Entity e, CompID componentID) {
 
         auto collIt = std::find(collisionEntities.begin(), collisionEntities.end(), e);
 
-        if (collIt != collisionEntities.end())
+        if (collIt != collisionEntities.end()) {
             collisionEntities.erase(collIt);
+            removedCollisionEntities.emplace_back(e);
+        }
     }
 
     if (componentID == ComponentID::cTransform || componentID == ComponentID::cVelocity) {

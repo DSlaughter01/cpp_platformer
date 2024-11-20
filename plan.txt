@@ -1,22 +1,18 @@
-TODO NEXT:
-Implement scrolling screen:
+TODO NEXT
+Resolve collision bug when the player collides simultaneously horizontally and vertically
+Implement a more efficient way of doing collision detection
+Add coins and maybe a solid aspect (to collision component?)
+Scoring system 
+Enemies
+Asset handler
 
-    In the game, this requires a variable (int) called screenScrollX
-    This should also have a function called SetScreenScroll();
-    When the player moves past a certain point on the screen (7/8 of screen width to the right, or 1/8 of screen width to left), screenScrollX is increased or decreased
-    In the GUI, the renderScreen function has to take screenScrollX as an argument
-    The back and middle ground have to be rendered enough times to cover the whole level
-    The background should move slower than everything else (1/4 speed)
-    The Systems also have to take this into account - specifically in InputSystem
-    The transforms' x position has to be moved by the screen scroll (for every entity)
 
-Comments:
+General Comments:
+1\ File EntityManager.cpp function GetComponent. It would be good to be able to add multiple components at the same time
 
-2\ File EntityManager.cpp function GetComponent. It would be good to be able to add multiple components at the same time
+2\ File Game.cpp function GameLoop. Combine LoadPlayer and LoadTilemap and maybe some other info into a LoadGame or LoadLevel function
 
-4\ File Game.cpp function GameLoop. Combine LoadPlayer and LoadTilemap and maybe some other info into a LoadGame function
+3\ The flipping of sprites assumes that they are all facing the same way. May need to set a starting direction and then see whether m_dir is different in order to flip or not
 
-6\ The flipping of sprites assumes that they are all facing the same way. May need to set a starting direction and then see whether m_dir is different in order to flip or not
-
-Collision detection:
+4\ Collision detection:
 Assuming for the moment that fixed objects do not have a velocity component, but will come back to that later because it is not robust

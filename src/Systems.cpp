@@ -145,6 +145,10 @@ void InputSystem::Update(const Uint8* keyboard) {
 void CollisionSystem::Update() {
 
     collisionEntities = entityManager.GetCollisionEntities();
+    newCollisionEntities = entityManager.GetNewCollisionEntities();
+    removedCollisionEntities = entityManager.GetRemovedCollisionEntities();
+    
+    quadTree.Update(newCollisionEntities, removedCollisionEntities);
 
     std::shared_ptr<CTransform> tran = nullptr;
     std::shared_ptr<CCollisionState> coll = nullptr;
@@ -190,6 +194,8 @@ void CollisionSystem::CheckVerticalCollisions() {
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
     std::shared_ptr<CVelocity> vel = nullptr;
+
+    std::vector<std::shared_ptr<QuadTreeNode>> quadNodes = quadTree.GetLeafNodes();
 
     // Do a triangular loop
     for (Entity i = 0; i < collisionEntities.size() - 1; i++) {
@@ -246,8 +252,6 @@ void CollisionSystem::CheckHorizontalCollisions() {
     std::shared_ptr<CCollisionState> coll2 = nullptr;
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
-
-    // TODO : Collisions based on tags
     
     // Do a triangular loop
     for (Entity i = 0; i < collisionEntities.size() - 1; i++) {

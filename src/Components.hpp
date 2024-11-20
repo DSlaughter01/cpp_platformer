@@ -124,6 +124,8 @@ struct CIsAlive : public Component {
 
 struct CCollisionState : public Component {
 
+    bool dynamic;
+
     bool isCollidingUp;
     bool isCollidingDown; 
     bool isCollidingLeft;
@@ -132,7 +134,7 @@ struct CCollisionState : public Component {
     std::unordered_map<Entity, Direction> horCollWith;
     std::unordered_map<Entity, Direction> vertCollWith;
 
-    CCollisionState() :
+    CCollisionState(bool dyn) :
         Component(ComponentID::cCollisionState),
         isCollidingUp(false), isCollidingDown(false),
         isCollidingLeft(false), isCollidingRight(false) {

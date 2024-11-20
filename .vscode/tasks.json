@@ -13,6 +13,8 @@
                 "${workspaceFolder}/src/GUI.cpp",
                 "${workspaceFolder}/src/EntityManager.cpp",
                 "${workspaceFolder}/src/Systems.cpp",
+                "${workspaceFolder}/src/QuadTree.cpp",
+                "${workspaceFolder}/src/QuadTreeNode.cpp",
                 
                 // Specify the output executable
                 "-o", "${workspaceFolder}/build/main.exe",

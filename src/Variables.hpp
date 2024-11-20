@@ -1,5 +1,6 @@
 #pragma once 
 #include <math.h>
+#include <bitset>
 
 using Entity = uint16_t;
 
@@ -29,6 +30,7 @@ namespace World {
 
     // Level information for scrolling, to be updated according to the map in Game::LoadTilemap
     inline int levelWidth;
+    inline int levelHeight;
     inline int leftScroll = (World::WindowWidth) / 8;
     inline int rightScroll = (World::WindowWidth * 7) / 8;
 

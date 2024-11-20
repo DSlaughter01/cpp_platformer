@@ -20,7 +20,7 @@ void Game::LoadPlayer() {
     entityManager.SetPlayerEntity(e);
 
     CTransform transform(Player::width * 2, Player::height , Player::width, Player::height);
-    CCollisionState collision;
+    CCollisionState collision(true);
     CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, Direction::Left, 5);
     CVelocity velocity(true, 0, 0);
     CLanded landed(false);
@@ -41,6 +41,7 @@ void Game::LoadTilemap() {
     tilemapFile.open("src/level1.txt");
     int line = 0;
     int levelWidth = 0;
+    int levelHeight = 0;
 
     if (tilemapFile.is_open()) {
         
@@ -58,11 +59,14 @@ void Game::LoadTilemap() {
                     if (x > levelWidth)
                         levelWidth = x;
 
+                    if (y > levelHeight)
+                        levelHeight = y;
+
                     Entity e = entityManager.CreateEntity();
 
                     // Create the tile with Transform, Spritesheet, and Collision components
                     CTransform transform(x, y, World::TileDim, World::TileDim);
-                    CCollisionState collision;
+                    CCollisionState collision(false);
 
                     int spritesheetID = currentLine[i] - '0' + 2;
                     
@@ -106,15 +110,16 @@ void Game::GameLoop() {
                 isRunning = false;
                 break;
             }
-        }        
+        }    
+
         systemManager.Update(currentKeyboardState);
         gui.RenderScreen(systemManager, xOffset);
  
         // Control frame rate
         frameEnd = SDL_GetTicks64();
 
-        //int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
-        //std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
+        // int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
+        // std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
 
         if (frameEnd - frameStart < World::DesiredFrameTicks) {
             SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
