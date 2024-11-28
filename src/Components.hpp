@@ -5,7 +5,7 @@
 
 // Ideas here https://www.reddit.com/r/roguelikedev/comments/b8ozdk/looking_for_a_good_general_list_of_useful_ecs/
 
-using Entity = uint16_t;
+using Entity = int16_t;
 using CompID = uint16_t;
 
 enum ComponentID {cTag, cTransform, cSpritesheet, cVelocity, cCollisionState,
@@ -136,6 +136,7 @@ struct CCollisionState : public Component {
 
     CCollisionState(bool dyn) :
         Component(ComponentID::cCollisionState),
+        dynamic(dyn),
         isCollidingUp(false), isCollidingDown(false),
         isCollidingLeft(false), isCollidingRight(false) {
             horCollWith.clear();

@@ -60,9 +60,13 @@ class InputSystem : public System {
 class CollisionSystem : public System {
 
     public:
-        CollisionSystem(EntityManager &em) : entityManager(em), quadTree(em, 10),
-        anyHorCollisions(false), anyVertCollisions(false), collisionEntities({}) {}
+        CollisionSystem(EntityManager &em) : 
+            entityManager(em), quadTree(em, 10),
+            anyHorCollisions(false), anyVertCollisions(false), 
+            collisionEntities({}) {}
+
         void Update() override;
+        void InitQuadTree(int rootWidth, int rootHeight, int maxEntsPerNode) {quadTree.Init(rootWidth, rootHeight, maxEntsPerNode);}
 
     private:
 
@@ -70,7 +74,6 @@ class CollisionSystem : public System {
         std::vector<Entity> collisionEntities;
         std::vector<Entity> newCollisionEntities;
         std::vector<Entity> removedCollisionEntities;
-
 
         std::array<std::shared_ptr<CVelocity>, World::MaxEntities> velocities {};
 

@@ -1,11 +1,15 @@
 #include "QuadTree.hpp"
 
 QuadTree::QuadTree(EntityManager &em, int maxD) :
-    entityManager(em), leafNodeCount(1), maxDepth(maxD) {
+    entityManager(em), leafNodeCount(1), maxDepth(maxD) {}
+
+
+void QuadTree::Init(int rootWidth, int rootHeight, int maxEntsPerNode) {
 
     // Creates the root node as the whole level
-    SDL_Rect boundingBox = {0, 0, World::levelWidth, World::levelHeight};
-    root = std::make_shared<QuadTreeNode>(boundingBox, 0);
+    maxEntitiesPerNode = maxEntsPerNode;
+    SDL_Rect boundingBox = {0, 0, rootWidth, rootHeight};
+    root = std::make_shared<QuadTreeNode>(boundingBox, 0, maxDepth, maxEntsPerNode);
 
     // Creates the initial tree
     Update(entityManager.GetCollisionEntities(), {});
@@ -95,10 +99,11 @@ void QuadTree::Merge(std::shared_ptr<QuadTreeNode> &parent) {
 }
 
 
-void QuadTree::Subdivide(std::shared_ptr<QuadTreeNode> &curr) {
+bool QuadTree::Subdivide(std::shared_ptr<QuadTreeNode> &curr) {
 
-    if (!curr->CheckIsLeaf()) 
-        return;
+    if (!curr->NeedsSubdivision()) {
+        return false;
+    }
 
     leafNodeCount += 3; // current node is no longer a leaf, but create 4 more nodes by subdividing => 3
     
@@ -117,25 +122,27 @@ void QuadTree::Subdivide(std::shared_ptr<QuadTreeNode> &curr) {
 
     // Create new nodes
     int depth = curr->GetDepth();
-    std::shared_ptr<QuadTreeNode> topLeftNode = std::make_shared<QuadTreeNode>(topLeftBB, depth);
-    std::shared_ptr<QuadTreeNode> topRightNode = std::make_shared<QuadTreeNode>(topRightBB, depth);
-    std::shared_ptr<QuadTreeNode> bottomLeftNode = std::make_shared<QuadTreeNode>(bottomLeftBB, depth);
-    std::shared_ptr<QuadTreeNode> bottomRightNode = std::make_shared<QuadTreeNode>(bottomRightBB, depth);
+    std::shared_ptr<QuadTreeNode> topLeftNode = std::make_shared<QuadTreeNode>(topLeftBB, depth, maxDepth, maxEntitiesPerNode);
+    std::shared_ptr<QuadTreeNode> topRightNode = std::make_shared<QuadTreeNode>(topRightBB, depth, maxDepth, maxEntitiesPerNode);
+    std::shared_ptr<QuadTreeNode> bottomLeftNode = std::make_shared<QuadTreeNode>(bottomLeftBB, depth, maxDepth, maxEntitiesPerNode);
+    std::shared_ptr<QuadTreeNode> bottomRightNode = std::make_shared<QuadTreeNode>(bottomRightBB, depth, maxDepth, maxEntitiesPerNode);
 
     std::array<std::shared_ptr<QuadTreeNode>, 4> newChildren = {topLeftNode, topRightNode, bottomLeftNode, bottomRightNode};
     curr->SetChildNodes(newChildren);
 
     // Redistribute and clear the current node's entities
-    for (auto &e : curr->GetEntities()) {
+    for (auto& e : curr->GetEntities()) {
 
-        if (e == World::InvalidEntity)
-            continue;
+        if (e) {
 
-        for (auto &child : curr->GetChildNodes()) 
-            InsertEntity(child, e);
-
-        curr->ClearEntities();
+            for (auto &child : curr->GetChildNodes()) {
+                InsertEntity(child, e);
+            }
+            curr->ClearEntities();
+        }
     }
+
+    return true;
 }
 
 
@@ -144,7 +151,6 @@ void QuadTree::ClearNode(std::shared_ptr<QuadTreeNode> &curr) {
     // Only clear leaf nodes, otherwise will leave isolated nodes further along the branch
     if (curr->CheckIsLeaf()) {
         curr->ClearEntities();
-        curr->ClearChildren();
         leafNodeCount--;
     }
 }
@@ -158,31 +164,39 @@ void QuadTree::InsertEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
     
     if (!transform)
         return;
-        
+      
     SDL_Rect entityBB = transform->m_rect;
-    if (!SDL_HasIntersection(&entityBB, &curr->GetBoundingBox())) 
+    if (!SDL_HasIntersection(&entityBB, &(curr->GetBoundingBox())))
         return;
-    
+        
     // If it does intersect, and it is a leaf ...
     if (curr->CheckIsLeaf()) {
 
-        // ... and the node is not full, it can be inserted
+        // ... try and insert the entity into the current node
         bool inserted = curr->InsertEntity(e);
 
-        // ... but the node is full (node not inserted), the node needs to subdivide and redistribute entities
-        if (!inserted && curr->GetDepth() <= maxDepth) {
+        // If it cannot be inserted, the node needs to subdivide and redistribute entities
+        if (!inserted) {
 
-            Subdivide(curr);
+            bool divided = Subdivide(curr);
 
-            for (auto &child : curr->GetChildNodes()) 
-                InsertEntity(child, e);
+            if (divided) {
+
+                for (auto &child : curr->GetChildNodes()) 
+                    InsertEntity(child, e);
+            }
+
+            // This usually happens when the tree has reached max depth and cannot subdivide, so stores more entities than normal
+            else 
+                curr->InsertEntity(e);
         }
     }
 
     // Intersection && !leafNode => go further into tree
     else {
-        for (auto &child : curr->GetChildNodes())
+        for (auto &child : curr->GetChildNodes()) {
             InsertEntity(child, e);
+        }
     }
 }
 
@@ -203,11 +217,12 @@ void QuadTree::RemoveEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
 
 
 void QuadTree::Update(const std::vector<Entity> &createdEntities, const std::vector<Entity> &deletedEntities) {
-
+ 
     // Created entities need to be inserted into the right part of the tree
     if (createdEntities.size() > 0) {
-        for (int i = 0; i < createdEntities.size(); i++)
+        for (int i = 0; i < createdEntities.size(); i++) {
             InsertEntity(root, createdEntities[i]);
+        }
     }
 
     // Entities that are no longer active should be removed from the tree
@@ -215,11 +230,17 @@ void QuadTree::Update(const std::vector<Entity> &createdEntities, const std::vec
         for (int i = 0; i < deletedEntities.size(); i++) 
             RemoveEntity(root, deletedEntities[i]);  
     }
+
+    // Once the created and deleted entities have been processed, clear so they don't keep getting passed to the Update method
+    entityManager.ResetCollisionEntityChanges();
     
     std::vector<Entity> collisionEntities = entityManager.GetCollisionEntities();
     std::shared_ptr<CCollisionState> coll = nullptr;
     std::shared_ptr<CTransform> tran = nullptr;
+    std::shared_ptr<CVelocity> vel = nullptr;
     SDL_Rect rect;
+
+    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes = GetLeafNodes();
 
     for (auto &e : collisionEntities) {
 
@@ -231,10 +252,14 @@ void QuadTree::Update(const std::vector<Entity> &createdEntities, const std::vec
             
             rect = tran->m_rect;
 
-            // Removes the entity from its old node, and inserts it into the new one.
-            // Probably not ideal because I should include a check to see if it has actually moved node before performing all the operations
-            RemoveEntity(root, e);
-            InsertEntity(root, e);
+            vel = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
+
+            if (vel && (vel->dx != 0 || vel->dy != 0)) {
+
+                // If the entity moved in the last frame, remove it from its old node and insert it into the new one.
+                RemoveEntity(root, e);
+                InsertEntity(root, e);
+            }
         }
-    }
+    } 
 }

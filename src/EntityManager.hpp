@@ -17,11 +17,9 @@
 #include <algorithm>
 #include <utility>
 
-using Entity = uint16_t;
+using Entity = int16_t;
 using CompID = uint16_t;
 using BinaryKey = uint32_t;
-
-// Creating a binary key for entityComponentMap with sufficient space for unique IDs in a flat map
 
 class EntityManager {
 
@@ -55,6 +53,11 @@ class EntityManager {
 
         inline BinaryKey ReturnBinaryKey(Entity entity, CompID componentID) {
             return (static_cast<BinaryKey>(entity) << 8) | componentID;
+        }
+
+        void ResetCollisionEntityChanges() {
+            newCollisionEntities.clear();
+            removedCollisionEntities.clear();
         }
 
         // Entity getters and setters 

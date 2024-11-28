@@ -41,26 +41,19 @@ void Game::LoadTilemap() {
     tilemapFile.open("src/level1.txt");
     int line = 0;
     int levelWidth = 0;
-    int levelHeight = 0;
+    int x = 0;
+    int y = 0;
 
     if (tilemapFile.is_open()) {
         
-        while (tilemapFile) {
-
-            std::getline(tilemapFile, currentLine);
+        while (std::getline(tilemapFile, currentLine)) {
 
             for (int i = 0; i < currentLine.size(); i++) {
 
                 if (currentLine[i] != '.') {
 
-                    int x = i * World::TileDim;
-                    int y = line * World::TileDim;
-
-                    if (x > levelWidth)
-                        levelWidth = x;
-
-                    if (y > levelHeight)
-                        levelHeight = y;
+                    x = i * World::TileDim;
+                    levelWidth = (x > levelWidth) ? x : levelWidth;
 
                     Entity e = entityManager.CreateEntity();
 
@@ -70,8 +63,6 @@ void Game::LoadTilemap() {
 
                     int spritesheetID = currentLine[i] - '0' + 2;
                     
-                    // TODO: Add a tag
-
                     CSpritesheet spritesheet(currentLine[i] - '0' + 2, 1, 18, 18);
 
                     entityManager.AddComponent<CTransform>(e, transform);
@@ -79,10 +70,19 @@ void Game::LoadTilemap() {
                     entityManager.AddComponent<CSpritesheet>(e, spritesheet);
                 }
             }
+            y += World::TileDim;
             line++;
         }
     }
-    World::levelWidth = levelWidth;
+    else {
+        std::cerr << "Could node open file. Please check filename." << std::endl;
+        return;
+    }
+
+    World::levelWidth = x + levelWidth;
+    World::levelHeight = y + World::TileDim;
+
+    systemManager.InitQuadTree(World::levelWidth, World::levelHeight, 4);
     gui.SetBackMidRenderTimes(levelWidth);
     tilemapFile.close();
 }
@@ -95,6 +95,31 @@ void Game::GameLoop() {
 
     LoadTilemap();
     LoadPlayer();
+
+    int tranX = 0;
+    int tranY = 0;
+    
+    for (int i = 0; i < World::MaxEntities - 100; i++) {
+
+        Entity e = entityManager.CreateEntity();
+        
+        CTransform transform(tranX, tranY, Player::width / 8, Player::height / 8);
+        CCollisionState collision(true);
+        CVelocity velocity(false, 1, 0);
+        CSpritesheet spritesheet(filenameIdx::coin, 3, 48, 16, Direction::Right, Direction::Left, 20);
+
+        entityManager.AddComponent(e, transform);
+        entityManager.AddComponent(e, collision);
+        entityManager.AddComponent(e, spritesheet);
+        entityManager.AddComponent(e, velocity);
+
+        tranX += 8;
+
+        if (tranX > World::levelWidth / 2) {
+            tranX = 0;
+            tranY += 8;
+        }
+    }
 
     int xOffset = 0;
 
@@ -118,11 +143,13 @@ void Game::GameLoop() {
         // Control frame rate
         frameEnd = SDL_GetTicks64();
 
-        // int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
-        // std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
+        int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
+        std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
 
         if (frameEnd - frameStart < World::DesiredFrameTicks) {
             SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
         }
+
+        // std::cin.get();
     }
 }

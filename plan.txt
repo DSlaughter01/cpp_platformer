@@ -1,11 +1,12 @@
 TODO NEXT
+Filter the entities removed from the quadtree to only act on entities which go out of their node
+
 Resolve collision bug when the player collides simultaneously horizontally and vertically
 Implement a more efficient way of doing collision detection
 Add coins and maybe a solid aspect (to collision component?)
 Scoring system 
 Enemies
 Asset handler
-
 
 General Comments:
 1\ File EntityManager.cpp function GetComponent. It would be good to be able to add multiple components at the same time

@@ -57,7 +57,8 @@
         "xhash": "cpp",
         "fstream": "cpp",
         "set": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "unordered_set": "cpp"
     },
     "makefile.configureOnOpen": false
 }

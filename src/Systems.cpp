@@ -195,49 +195,60 @@ void CollisionSystem::CheckVerticalCollisions() {
     std::shared_ptr<CTransform> tran2 = nullptr;
     std::shared_ptr<CVelocity> vel = nullptr;
 
-    std::vector<std::shared_ptr<QuadTreeNode>> quadNodes = quadTree.GetLeafNodes();
+    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes = quadTree.GetLeafNodes();
 
     // Do a triangular loop
-    for (Entity i = 0; i < collisionEntities.size() - 1; i++) {
+    for (auto &node : leafNodes) {
 
-        coll1 = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState);
-        tran1 = entityManager.GetComponent<CTransform>(collisionEntities[i], ComponentID::cTransform);
+        std::vector<Entity> entitiesInNode = node->GetEntities();
 
-        for (Entity j = i + 1; j < collisionEntities.size(); j++) {
-                
-            coll2 = entityManager.GetComponent<CCollisionState>(collisionEntities[j], ComponentID::cCollisionState);
-            tran2 = entityManager.GetComponent<CTransform>(collisionEntities[j], ComponentID::cTransform);
+        for (int i = 0; i < entitiesInNode.size(); i++) {
 
-            const SDL_Rect rect1 = tran1->m_rect;
-            const SDL_Rect rect2 = tran2->m_rect;
-
-            // If the 2 rectangles don't collide, move on
-            if (!(SDL_HasIntersection(&rect1, &rect2)))
+            if (!entitiesInNode[i]) 
                 continue;
+            
+            coll1 = entityManager.GetComponent<CCollisionState>(entitiesInNode[i], ComponentID::cCollisionState);
+            tran1 = entityManager.GetComponent<CTransform>(entitiesInNode[i], ComponentID::cTransform);
 
-            // Check collision direction
-            bool a = (rect1.y < rect2.y && rect1.y + rect1.h > rect2.y); // i on top, j on bottom
-            bool b = (rect2.y < rect1.y && rect2.y + rect2.h > rect1.y); // i on bottom, j on top
+            for (int j = i + 1; j < entitiesInNode.size(); j++) {
 
-            if ((a || b) && !anyVertCollisions)
-                anyVertCollisions = true;
+                if (!entitiesInNode[j]) 
+                    continue;
+                    
+                coll2 = entityManager.GetComponent<CCollisionState>(entitiesInNode[j], ComponentID::cCollisionState);
+                tran2 = entityManager.GetComponent<CTransform>(entitiesInNode[j], ComponentID::cTransform);
 
-            if (a) {
+                const SDL_Rect rect1 = tran1->m_rect;
+                const SDL_Rect rect2 = tran2->m_rect;
 
-                coll1->isCollidingDown = true;
-                coll2->isCollidingUp = true;
+                // If the 2 rectangles don't collide, move on
+                if (!(SDL_HasIntersection(&rect1, &rect2)))
+                    continue;
 
-                coll1->vertCollWith.insert({j, Direction::Down});
-                coll2->vertCollWith.insert({i, Direction::Up});
-            }
+                // Check collision direction
+                bool a = (rect1.y < rect2.y && rect1.y + rect1.h > rect2.y); // i on top, j on bottom
+                bool b = (rect2.y < rect1.y && rect2.y + rect2.h > rect1.y); // i on bottom, j on top
 
-            else if (b) {
+                if ((a || b) && !anyVertCollisions)
+                    anyVertCollisions = true;
 
-                coll1->isCollidingUp = true;
-                coll2->isCollidingDown = true;
+                if (a) {
 
-                coll1->vertCollWith.insert({j, Direction::Up});
-                coll2->vertCollWith.insert({i, Direction::Down});
+                    coll1->isCollidingDown = true;
+                    coll2->isCollidingUp = true;
+
+                    coll1->vertCollWith.insert({entitiesInNode[j], Direction::Down});
+                    coll2->vertCollWith.insert({entitiesInNode[i], Direction::Up});
+                }
+
+                else if (b) {
+
+                    coll1->isCollidingUp = true;
+                    coll2->isCollidingDown = true;
+
+                    coll1->vertCollWith.insert({entitiesInNode[j], Direction::Up});
+                    coll2->vertCollWith.insert({entitiesInNode[i], Direction::Down});
+                }
             }
         }
     }
@@ -246,6 +257,8 @@ void CollisionSystem::CheckVerticalCollisions() {
 
 void CollisionSystem::CheckHorizontalCollisions() {
 
+    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes = quadTree.GetLeafNodes();
+
     anyHorCollisions = false;
 
     std::shared_ptr<CCollisionState> coll1 = nullptr;
@@ -253,47 +266,58 @@ void CollisionSystem::CheckHorizontalCollisions() {
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
     
-    // Do a triangular loop
-    for (Entity i = 0; i < collisionEntities.size() - 1; i++) {
+    // Triangular loop on each leaf node in the quad tree
+    for (auto &node : leafNodes) {
 
-        coll1 = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState);
-        tran1 = entityManager.GetComponent<CTransform>(collisionEntities[i], ComponentID::cTransform);
+        std::vector<Entity> entitiesInNode = node->GetEntities();
 
-        for (Entity j = i + 1; j < collisionEntities.size(); j++) {
-                
-            coll2 = entityManager.GetComponent<CCollisionState>(collisionEntities[j], ComponentID::cCollisionState);
-            tran2 = entityManager.GetComponent<CTransform>(collisionEntities[j], ComponentID::cTransform);
+        for (int i = 0; i < entitiesInNode.size(); i++) {
 
-            const SDL_Rect rect1 = tran1->m_rect;
-            const SDL_Rect rect2 = tran2->m_rect;
-
-            // If the 2 rectangles don't collide, move on
-            if (!(SDL_HasIntersection(&rect1, &rect2)))
+            if (!entitiesInNode[i])
                 continue;
 
-            // Work out whether there is horizontal collision
-            bool a = (rect1.x < rect2.x && rect1.x + rect1.w > rect2.x); // i on left, j on right
-            bool b = (rect2.x < rect1.x && rect2.x + rect2.w > rect1.x); // i on right, j on left 
+            coll1 = entityManager.GetComponent<CCollisionState>(entitiesInNode[i], ComponentID::cCollisionState);
+            tran1 = entityManager.GetComponent<CTransform>(entitiesInNode[i], ComponentID::cTransform);
 
-            if ((a || b) && !anyHorCollisions)
-                anyHorCollisions = true;
+            for (int j = i + 1; j < entitiesInNode.size(); j++) {
 
-            if (a) {
+                if (!entitiesInNode[j])
+                    continue;
+                
+                coll2 = entityManager.GetComponent<CCollisionState>(entitiesInNode[j], ComponentID::cCollisionState);
+                tran2 = entityManager.GetComponent<CTransform>(entitiesInNode[j], ComponentID::cTransform);
 
-                coll1->isCollidingRight = true;
-                coll2->isCollidingLeft = true;
+                const SDL_Rect rect1 = tran1->m_rect;
+                const SDL_Rect rect2 = tran2->m_rect;
 
-                coll1->horCollWith.insert({j, Direction::Right});
-                coll2->horCollWith.insert({i, Direction::Left});
-            }
+                // If the 2 rectangles don't collide, move on
+                if (!(SDL_HasIntersection(&rect1, &rect2)))
+                    continue;
 
-            else if (b) {
+                // Work out whether there is horizontal collision
+                bool a = (rect1.x < rect2.x && rect1.x + rect1.w > rect2.x); // i on left, j on right
+                bool b = (rect2.x < rect1.x && rect2.x + rect2.w > rect1.x); // i on right, j on left 
 
-                coll1->isCollidingLeft = true;
-                coll2->isCollidingRight = true;
+                if ((a || b) && !anyHorCollisions)
+                    anyHorCollisions = true;
 
-                coll1->horCollWith.insert({j, Direction::Left});
-                coll2->horCollWith.insert({i, Direction::Right});
+                if (a) {
+
+                    coll1->isCollidingRight = true;
+                    coll2->isCollidingLeft = true;
+
+                    coll1->horCollWith.insert({entitiesInNode[j], Direction::Right});
+                    coll2->horCollWith.insert({entitiesInNode[i], Direction::Left});
+                }
+
+                else if (b) {
+
+                    coll1->isCollidingLeft = true;
+                    coll2->isCollidingRight = true;
+
+                    coll1->horCollWith.insert({entitiesInNode[j], Direction::Left});
+                    coll2->horCollWith.insert({entitiesInNode[i], Direction::Right});
+                }
             }
         }
     }
@@ -306,7 +330,7 @@ void CollisionSystem::ResolveHorizontalCollisions() {
     std::shared_ptr<CTransform> rightTran = nullptr;
 
     // Move the object out of the way
-    for (Entity i = 0; i < World::MaxEntities; i++) {
+    for (int i = 0; i < collisionEntities.size(); i++) {
 
         std::unordered_map<Entity, Direction> horColls = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState)->horCollWith;
 
@@ -371,7 +395,7 @@ void CollisionSystem::ResolveVerticalCollisions() {
     std::shared_ptr<CTransform> bottomTran = nullptr;
 
     // Move the object out of the way
-    for (Entity i = 0; i < World::MaxEntities; i++) {
+    for (int i = 0; i < collisionEntities.size(); i++) {
 
         if (collisionEntities[i] && velocities[i]) {
 
@@ -417,7 +441,6 @@ void CollisionSystem::ResolveVerticalCollisions() {
 
                 // Both objects moving towards each other
                 else if (velocities[top]->dy > 0 && velocities[bottom]->dy < 0) {
-                    
                     velocities[top]->dy = 0;
                     velocities[bottom]->dy = 0;
 

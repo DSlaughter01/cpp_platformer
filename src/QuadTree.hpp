@@ -16,6 +16,9 @@ class QuadTree {
 
         // The maximum depth of the tree, to prevent infinite recursion
         int maxDepth;
+
+        // Max entities in one node
+        int maxEntitiesPerNode;
         
         EntityManager &entityManager;
         std::shared_ptr<QuadTreeNode> root;
@@ -23,7 +26,11 @@ class QuadTree {
     public:
         QuadTree(EntityManager &em, int maxD);
 
+        void Init(int rootWidth, int rootHeight, int maxEntsPerNode); // Not dealt with in constructor because levelHeight and levelWidth aren't initialised in time
+
         std::shared_ptr<QuadTreeNode> GetRoot() {return root;}
+        int GetMaxEntitiesPerNode() {return maxEntitiesPerNode;}
+        int GetMaxDepth() {return maxDepth;}
 
         void Update(const std::vector<Entity> &createdEntities, const std::vector<Entity> &deletedEntities);
 
@@ -38,7 +45,7 @@ class QuadTree {
         void Merge(std::shared_ptr<QuadTreeNode> &parent);
 
         // Creates 4 new child node for the specified node
-        void Subdivide(std::shared_ptr<QuadTreeNode> &curr);
+        bool Subdivide(std::shared_ptr<QuadTreeNode> &curr);
 
         void ClearNode(std::shared_ptr<QuadTreeNode> &curr);
 

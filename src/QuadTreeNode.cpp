@@ -2,32 +2,30 @@
 
 bool QuadTreeNode::InsertEntity(Entity e) {
 
-    // Check if the entities array is full, and if not get the first available index
-    auto it = std::find(entities.begin(), entities.end(), World::InvalidEntity);
-    Entity availableIdx = (it != entities.end()) ? std::distance(entities.begin(), it) : World::InvalidEntity;
-
+    // Conditions on which the entity cannot be inserted
+    if (entities.size() >= maxEntities && depth < maxDepth) {
+        return false;
+    }
     // Check if the entity already exists in entities
-    auto it2 = std::find(entities.begin(), entities.end(), e);
+    if (std::find(entities.begin(), entities.end(), e) == entities.end()) {
 
-    if (availableIdx != World::InvalidEntity && it2 != entities.end()) {
-
-        // Assign the first non-assigned entity to the correct position in the tree's entities vector
-        entities[availableIdx] = e;
+        // Add the entity
+        entities.emplace_back(e);
         return true;
     }
 
-    else 
+    else {
         return false;
+    }
 }
 
 
 bool QuadTreeNode::RemoveEntity(Entity e) {
     
     auto it = std::find(entities.begin(), entities.end(), e);
-    Entity entityIdx = (it != entities.end()) ? std::distance(entities.begin(), it) : World::InvalidEntity;
 
-    if (entityIdx != World::InvalidEntity) {
-        entities[entityIdx] = World::InvalidEntity; 
+    if (it != entities.end()) {
+        entities.erase(it); 
         return true;
     }
     else
@@ -36,14 +34,22 @@ bool QuadTreeNode::RemoveEntity(Entity e) {
 
 
 bool QuadTreeNode::CheckIsLeaf() const {
+        
+    for (auto &i : childNodes) {
+        if (i) {
+            return false;
+        }
 
-    return std::none_of(childNodes.begin(), childNodes.end(), [](const std::shared_ptr<QuadTreeNode>& child) {
-                        return !child; // Predicate: Node is not null
-                    });
+    } 
+    return true;
 }
 
 
 bool QuadTreeNode::CheckEntityPresence(Entity e) {
     auto it = std::find(entities.begin(), entities.end(), e);
     return (it != entities.end()) ? true : false;
+}
+
+bool QuadTreeNode::NeedsSubdivision() {  
+    return (entities.size() >= 4 && depth < maxDepth && CheckIsLeaf()) ? true : false;
 }

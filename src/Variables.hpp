@@ -2,7 +2,7 @@
 #include <math.h>
 #include <bitset>
 
-using Entity = uint16_t;
+using Entity = int16_t;
 
 namespace Player {
 
