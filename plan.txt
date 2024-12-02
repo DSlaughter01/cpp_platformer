@@ -1,5 +1,6 @@
 TODO NEXT
-Filter the entities removed from the quadtree to only act on entities which go out of their node
+Optimise quadtree update
+Change vertical and horizontal collision detection to only act on collidingPairs
 
 Resolve collision bug when the player collides simultaneously horizontally and vertically
 Implement a more efficient way of doing collision detection

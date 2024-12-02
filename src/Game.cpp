@@ -144,12 +144,10 @@ void Game::GameLoop() {
         frameEnd = SDL_GetTicks64();
 
         int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
-        std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
+        // std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
 
         if (frameEnd - frameStart < World::DesiredFrameTicks) {
             SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
         }
-
-        // std::cin.get();
     }
 }

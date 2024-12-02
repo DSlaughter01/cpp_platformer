@@ -145,19 +145,16 @@ void InputSystem::Update(const Uint8* keyboard) {
 void CollisionSystem::Update() {
 
     collisionEntities = entityManager.GetCollisionEntities();
-    newCollisionEntities = entityManager.GetNewCollisionEntities();
-    removedCollisionEntities = entityManager.GetRemovedCollisionEntities();
-    
-    quadTree.Update(newCollisionEntities, removedCollisionEntities);
+  
+    quadTree.Update();
+    leafNodes = quadTree.GetLeafNodes();
 
-    std::shared_ptr<CTransform> tran = nullptr;
     std::shared_ptr<CCollisionState> coll = nullptr;
     std::shared_ptr<CLanded> land = nullptr;
 
     for (Entity e = 0; e < collisionEntities.size(); e++) {
 
         coll = entityManager.GetComponent<CCollisionState>(e, ComponentID::cCollisionState);
-        tran = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
         land = entityManager.GetComponent<CLanded>(e, ComponentID::cLanded);
 
         coll->isCollidingLeft = false;
@@ -171,17 +168,64 @@ void CollisionSystem::Update() {
 
         if (land)
             land->m_hasLanded = false;
+    } 
+
+ 
+    collidingPairs = BroadPass();
+
+    if (collidingPairs.size() > 0) {
+        CheckVerticalCollisions();
+        
+        if (anyVertCollisions)
+            ResolveVerticalCollisions();
+    }
+    
+    collidingPairs = BroadPass();
+
+    if (collidingPairs.size() > 0) {
+        CheckHorizontalCollisions();
+
+        if (anyHorCollisions)
+            ResolveHorizontalCollisions();
+    } 
+}
+
+
+std::vector<CollisionSystem::EntityPair> CollisionSystem::BroadPass() {
+
+    std::vector<CollisionSystem::EntityPair> collidingPairs {};
+
+    std::shared_ptr<CTransform> tran1 = nullptr;
+    std::shared_ptr<CTransform> tran2 = nullptr;
+
+    for (auto &node : leafNodes) {
+
+        std::vector<Entity> entitiesInNode = node->GetEntities();
+
+        if (entitiesInNode.size() == 0)
+            continue;
+
+        for (int i = 0; i < entitiesInNode.size() - 1; i++) {
+
+            tran1 = entityManager.GetComponent<CTransform>(entitiesInNode[i], ComponentID::cTransform);
+
+            for (int j = i + 1; j < entitiesInNode.size(); j++) {
+                    
+                tran2 = entityManager.GetComponent<CTransform>(entitiesInNode[j], ComponentID::cTransform);
+
+                const SDL_Rect rect1 = tran1->m_rect;
+                const SDL_Rect rect2 = tran2->m_rect;
+
+                // If the 2 rectangles don't collide, move on
+                if (SDL_HasIntersection(&rect1, &rect2)) {
+                    CollisionSystem::EntityPair newPair = {entitiesInNode[i], entitiesInNode[j]};
+                    collidingPairs.emplace_back(newPair);
+                }
+            }
+        }
     }
 
-    CheckVerticalCollisions();
-    
-    if (anyVertCollisions)
-        ResolveVerticalCollisions();
-    
-    CheckHorizontalCollisions();
-
-    if (anyHorCollisions)
-        ResolveHorizontalCollisions();
+    return collidingPairs;
 }
 
 
@@ -194,8 +238,6 @@ void CollisionSystem::CheckVerticalCollisions() {
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
     std::shared_ptr<CVelocity> vel = nullptr;
-
-    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes = quadTree.GetLeafNodes();
 
     // Do a triangular loop
     for (auto &node : leafNodes) {
@@ -256,8 +298,6 @@ void CollisionSystem::CheckVerticalCollisions() {
 
 
 void CollisionSystem::CheckHorizontalCollisions() {
-
-    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes = quadTree.GetLeafNodes();
 
     anyHorCollisions = false;
 

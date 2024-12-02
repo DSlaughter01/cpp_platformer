@@ -39,10 +39,10 @@ namespace World {
     constexpr int DesiredFrameTicks = 1000 / FPS;
 
     // Entities
-    constexpr Entity MaxEntities = 256;
+    constexpr Entity MaxEntities = 1024;
     constexpr int MaxComponents = 32;
-    constexpr std::bitset<World::MaxEntities> EmptyEntityBitset;
-    constexpr std::bitset<World::MaxComponents> EmptyComponentBitset;
+    constexpr std::bitset<World::MaxEntities> EmptyEntityBitset {};
+    constexpr std::bitset<World::MaxComponents> EmptyComponentBitset {};
     constexpr Entity InvalidEntity = -1;
 
     constexpr int MaxTextures = 32;

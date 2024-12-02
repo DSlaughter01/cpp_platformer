@@ -1,7 +1,7 @@
 #include "QuadTree.hpp"
 
 QuadTree::QuadTree(EntityManager &em, int maxD) :
-    entityManager(em), leafNodeCount(1), maxDepth(maxD) {}
+    entityManager(em), leafNodeCount(1), maxDepth(maxD), entityNodeMap({}), leafNodes({}) {}
 
 
 void QuadTree::Init(int rootWidth, int rootHeight, int maxEntsPerNode) {
@@ -11,33 +11,10 @@ void QuadTree::Init(int rootWidth, int rootHeight, int maxEntsPerNode) {
     SDL_Rect boundingBox = {0, 0, rootWidth, rootHeight};
     root = std::make_shared<QuadTreeNode>(boundingBox, 0, maxDepth, maxEntsPerNode);
 
+    leafNodes.reserve(std::pow(maxEntsPerNode, maxDepth) / 2);
+
     // Creates the initial tree
-    Update(entityManager.GetCollisionEntities(), {});
-}
-
-
-std::vector<std::shared_ptr<QuadTreeNode>> QuadTree::GetLeafNodes() {
-    
-    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes {};
-    leafNodes.reserve(leafNodeCount); // Preallocate memory, leafNodeCount should already be known
-    CollectLeafNodes(root, leafNodes);
-
-    return leafNodes;      
-}
-
-
-void QuadTree::CollectLeafNodes(std::shared_ptr<QuadTreeNode> &curr, std::vector<std::shared_ptr<QuadTreeNode>> &leafNodes) {
-
-    if (curr->CheckIsLeaf())
-        leafNodes.emplace_back(curr); 
-    
-    else {
-        for (auto &child : curr->GetChildNodes()) {
-
-            if (child) 
-                CollectLeafNodes(child, leafNodes);
-        }
-    }  
+    Update();
 }
 
 
@@ -84,14 +61,25 @@ void QuadTree::Merge(std::shared_ptr<QuadTreeNode> &parent) {
             break;
     }
 
+    // MERGE if true
     if (differentEntityCount <= 4) {
 
-        // Set all entities to World::InvalidEntity
         parent->ClearEntities(); 
 
         // Set parent's entities to differentEntities
         for (int i = 0; i < differentEntityVec.size(); i++) 
             parent->InsertEntity(differentEntityVec[i]);
+
+        // Update leafNodes: remove child nodes ...
+        for (auto &node : parent->GetChildNodes()) {
+            if (std::find(leafNodes.begin(), leafNodes.end(), node) != leafNodes.end())
+                leafNodes.erase(std::remove(leafNodes.begin(), leafNodes.end(), node), leafNodes.end());
+        }
+
+        // ... and add parent node
+        if (std::find(leafNodes.begin(), leafNodes.end(), parent) != leafNodes.end()) {
+            leafNodes.emplace_back(parent);
+        }
 
         // Remove children from parent
         parent->ClearChildren();
@@ -128,7 +116,14 @@ bool QuadTree::Subdivide(std::shared_ptr<QuadTreeNode> &curr) {
     std::shared_ptr<QuadTreeNode> bottomRightNode = std::make_shared<QuadTreeNode>(bottomRightBB, depth, maxDepth, maxEntitiesPerNode);
 
     std::array<std::shared_ptr<QuadTreeNode>, 4> newChildren = {topLeftNode, topRightNode, bottomLeftNode, bottomRightNode};
+
+    for (auto &child : newChildren) {
+        if (std::find(leafNodes.begin(), leafNodes.end(), child) == leafNodes.end())
+            leafNodes.emplace_back(child);
+    }
+
     curr->SetChildNodes(newChildren);
+
 
     // Redistribute and clear the current node's entities
     for (auto& e : curr->GetEntities()) {
@@ -175,20 +170,31 @@ void QuadTree::InsertEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
         // ... try and insert the entity into the current node
         bool inserted = curr->InsertEntity(e);
 
+        if (inserted) {
+            if (entityNodeMap.find(e) != entityNodeMap.end()) {
+                entityNodeMap[e].emplace_back(curr);
+            }
+        }
+
         // If it cannot be inserted, the node needs to subdivide and redistribute entities
-        if (!inserted) {
+        else {
 
             bool divided = Subdivide(curr);
 
             if (divided) {
 
-                for (auto &child : curr->GetChildNodes()) 
+                for (auto &child : curr->GetChildNodes()) {
                     InsertEntity(child, e);
+                }
             }
 
             // This usually happens when the tree has reached max depth and cannot subdivide, so stores more entities than normal
-            else 
+            else {
                 curr->InsertEntity(e);
+                if (entityNodeMap.find(e) != entityNodeMap.end()) {
+                    entityNodeMap[e].emplace_back(curr);
+                }
+            }
         }
     }
 
@@ -206,8 +212,9 @@ void QuadTree::RemoveEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
 
     // This algorithm needs to visit all of the leaf nodes, and check whether the entity still fits in the node
     // It could also get called if an entity is deleted from the game itself, so doesn't rely on bounding box
-    if (curr->CheckIsLeaf()) 
-        curr->RemoveEntity(e);
+    if (curr->CheckIsLeaf()) {
+        curr->RemoveEntity(e); 
+    }
 
     else {
         for (auto &child : curr->GetChildNodes())
@@ -216,50 +223,72 @@ void QuadTree::RemoveEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
 }
 
 
-void QuadTree::Update(const std::vector<Entity> &createdEntities, const std::vector<Entity> &deletedEntities) {
- 
+void QuadTree::Update() {
+
+    std::vector<Entity> collisionEntities = entityManager.GetCollisionEntities();
+    std::vector<Entity> createdEntities = entityManager.GetNewCollisionEntities();
+    std::vector<Entity> deletedEntities = entityManager.GetRemovedCollisionEntities();
+
     // Created entities need to be inserted into the right part of the tree
-    if (createdEntities.size() > 0) {
-        for (int i = 0; i < createdEntities.size(); i++) {
-            InsertEntity(root, createdEntities[i]);
-        }
+    for (int i = 0; i < createdEntities.size(); i++) {
+        if (entityNodeMap.find(createdEntities[i]) == entityNodeMap.end())
+            entityNodeMap.insert({createdEntities[i], {}});
+        InsertEntity(root, createdEntities[i]);
     }
 
     // Entities that are no longer active should be removed from the tree
-    if (deletedEntities.size() > 0) {
-        for (int i = 0; i < deletedEntities.size(); i++) 
-            RemoveEntity(root, deletedEntities[i]);  
-    }
+    for (int i = 0; i < deletedEntities.size(); i++) {
+        if (entityNodeMap.find(deletedEntities[i]) != entityNodeMap.end())
+            entityNodeMap.erase(deletedEntities[i]);
+        RemoveEntity(root, deletedEntities[i]); 
+    } 
 
     // Once the created and deleted entities have been processed, clear so they don't keep getting passed to the Update method
     entityManager.ResetCollisionEntityChanges();
-    
-    std::vector<Entity> collisionEntities = entityManager.GetCollisionEntities();
+
     std::shared_ptr<CCollisionState> coll = nullptr;
     std::shared_ptr<CTransform> tran = nullptr;
     std::shared_ptr<CVelocity> vel = nullptr;
     SDL_Rect rect;
-
-    std::vector<std::shared_ptr<QuadTreeNode>> leafNodes = GetLeafNodes();
 
     for (auto &e : collisionEntities) {
 
         // Get the position of each entity, if the entity is dynamic
         coll = entityManager.GetComponent<CCollisionState>(e, ComponentID::cCollisionState);
         tran = entityManager.GetComponent<CTransform>(e, ComponentID::cTransform);
+        vel = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
 
-        if (coll && coll->dynamic && tran) {
-            
+        if (coll && coll->dynamic && 
+            tran && 
+            vel && (vel->dx != 0 || vel->dy != 0)) {
+
+            bool changed = false;
             rect = tran->m_rect;
+        
+            // If the entity moved out of the node, update the entity's position in the tree
+            if (entityNodeMap.find(e) != entityNodeMap.end()) {
 
-            vel = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
+                std::vector<std::shared_ptr<QuadTreeNode>> nodesToRemove {};
+                
+                for (auto &leaf : entityNodeMap[e]) {
 
-            if (vel && (vel->dx != 0 || vel->dy != 0)) {
+                    if (!SDL_HasIntersection(&rect, &leaf->GetBoundingBox())) {
 
-                // If the entity moved in the last frame, remove it from its old node and insert it into the new one.
-                RemoveEntity(root, e);
-                InsertEntity(root, e);
+                        if (changed == false) changed = true;
+                        nodesToRemove.emplace_back(leaf);
+                        RemoveEntity(leaf, e);
+                    }
+                }
+
+                for (auto &node : nodesToRemove) {
+                    if (std::find(entityNodeMap[e].begin(), entityNodeMap[e].end(), node) != entityNodeMap[e].end()) {
+                        entityNodeMap[e].erase(std::remove(entityNodeMap[e].begin(), entityNodeMap[e].end(), node), entityNodeMap[e].end());
+                    } 
+                }
             }
+
+            if (changed)
+                InsertEntity(root, e);
         }
-    } 
+    }
 }

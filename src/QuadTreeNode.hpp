@@ -14,11 +14,11 @@ class QuadTreeNode {
         const uint16_t maxEntities;
 
         // Node depth in the tree, starting from 1 at the root (argument = 0 when created by the QuadTree)
-        uint16_t depth;
-        uint16_t maxDepth;
+        const uint16_t depth;
+        const uint16_t maxDepth;
 
         // The area covered by this node
-        SDL_Rect boundingBox;
+        const SDL_Rect boundingBox;
 
         // A length-4 array of entities contained within this region (equivalent to ->vals)
         std::vector<Entity> entities {};
@@ -38,7 +38,7 @@ class QuadTreeNode {
         // Getters
         int GetMaxEntities() {return maxEntities;}
         uint16_t GetDepth() {return depth;}
-        SDL_Rect& GetBoundingBox() {return boundingBox;}
+        const SDL_Rect& GetBoundingBox() {return boundingBox;}
         std::vector<Entity>& GetEntities() {return entities;}
         std::array<std::shared_ptr<QuadTreeNode>, 4>& GetChildNodes() {return childNodes;}
 
@@ -53,6 +53,6 @@ class QuadTreeNode {
 
         // Checks
         bool CheckIsLeaf() const;
-        bool CheckEntityPresence(Entity e);
+        bool CheckEntityPresence(Entity e) const;
         bool NeedsSubdivision();
 };

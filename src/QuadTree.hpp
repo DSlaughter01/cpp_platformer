@@ -13,15 +13,13 @@ class QuadTree {
 
     private:
         int leafNodeCount;
-
-        // The maximum depth of the tree, to prevent infinite recursion
         int maxDepth;
-
-        // Max entities in one node
         int maxEntitiesPerNode;
         
         EntityManager &entityManager;
         std::shared_ptr<QuadTreeNode> root;
+        std::vector<std::shared_ptr<QuadTreeNode>> leafNodes;
+        std::unordered_map<Entity, std::vector<std::shared_ptr<QuadTreeNode>>> entityNodeMap;
 
     public:
         QuadTree(EntityManager &em, int maxD);
@@ -31,17 +29,12 @@ class QuadTree {
         std::shared_ptr<QuadTreeNode> GetRoot() {return root;}
         int GetMaxEntitiesPerNode() {return maxEntitiesPerNode;}
         int GetMaxDepth() {return maxDepth;}
+        std::vector<std::shared_ptr<QuadTreeNode>> GetLeafNodes() {return leafNodes;}
 
-        void Update(const std::vector<Entity> &createdEntities, const std::vector<Entity> &deletedEntities);
-
-        // Returns a vector of all leaf nodes in the tree. To be used externally in the collision system.
-        std::vector<std::shared_ptr<QuadTreeNode>> GetLeafNodes();
+        void Update();
 
     private:
 
-        // Helper function to be called recursively inside GetLeafNodes
-        void CollectLeafNodes(std::shared_ptr<QuadTreeNode> &curr, std::vector<std::shared_ptr<QuadTreeNode>> &leafNodes);
-    
         void Merge(std::shared_ptr<QuadTreeNode> &parent);
 
         // Creates 4 new child node for the specified node

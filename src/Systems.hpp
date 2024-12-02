@@ -62,28 +62,28 @@ class CollisionSystem : public System {
     public:
         CollisionSystem(EntityManager &em) : 
             entityManager(em), quadTree(em, 10),
-            anyHorCollisions(false), anyVertCollisions(false), 
-            collisionEntities({}) {}
+            anyVertCollisions(false), anyHorCollisions(false),
+            collisionEntities({}), velocities({}) {}
 
         void Update() override;
         void InitQuadTree(int rootWidth, int rootHeight, int maxEntsPerNode) {quadTree.Init(rootWidth, rootHeight, maxEntsPerNode);}
 
     private:
-
-        bool anyHorCollisions, anyVertCollisions;
+        struct EntityPair {Entity e1, e2;};
+        EntityManager &entityManager;
         std::vector<Entity> collisionEntities;
-        std::vector<Entity> newCollisionEntities;
-        std::vector<Entity> removedCollisionEntities;
+        std::array<std::shared_ptr<CVelocity>, World::MaxEntities> velocities;
+        bool anyVertCollisions, anyHorCollisions;
 
-        std::array<std::shared_ptr<CVelocity>, World::MaxEntities> velocities {};
+        QuadTree quadTree;
+        std::vector<std::shared_ptr<QuadTreeNode>> leafNodes;
+        std::vector<EntityPair> collidingPairs {};
 
         const int collIdx = 0;
         const int tranIdx = 1;
 
-        EntityManager &entityManager;
-        QuadTree quadTree;
-
     private:
+        std::vector<EntityPair> BroadPass();
         void CheckVerticalCollisions();
         void CheckHorizontalCollisions();
         void ResolveHorizontalCollisions();

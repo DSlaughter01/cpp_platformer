@@ -6,6 +6,7 @@ bool QuadTreeNode::InsertEntity(Entity e) {
     if (entities.size() >= maxEntities && depth < maxDepth) {
         return false;
     }
+    
     // Check if the entity already exists in entities
     if (std::find(entities.begin(), entities.end(), e) == entities.end()) {
 
@@ -45,7 +46,7 @@ bool QuadTreeNode::CheckIsLeaf() const {
 }
 
 
-bool QuadTreeNode::CheckEntityPresence(Entity e) {
+bool QuadTreeNode::CheckEntityPresence(Entity e) const {
     auto it = std::find(entities.begin(), entities.end(), e);
     return (it != entities.end()) ? true : false;
 }
