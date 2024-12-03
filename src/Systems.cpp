@@ -82,7 +82,7 @@ void MovementSystem::Update() {
 
             transform->m_rect.x += velocity->dx;
             transform->m_rect.y += velocity->dy;
-
+ 
             // Change the direction spritesheets are rendered
             if (spritesheet) {
 
@@ -91,7 +91,7 @@ void MovementSystem::Update() {
 
                 if (spritesheet->m_dir != Direction::Left && velocity->dx < 0) 
                     spritesheet->m_dir = Direction::Left;
-            }
+            } 
         }
     }
 }
@@ -108,15 +108,17 @@ void InputSystem::Update(const Uint8* keyboard) {
     std::shared_ptr<CTransform> transform = entityManager.GetComponent<CTransform>(player, ComponentID::cTransform);
     std::shared_ptr<CLanded> landed = entityManager.GetComponent<CLanded>(player, ComponentID::cLanded);
 
+    // std::cout << transform->m_rect.x << ", " << transform->m_rect.y << ", " << transform->m_rect.w << ", " << transform->m_rect.h << std::endl; 
     if (!velocity) {
         std::cout << "Player doesn't have a velocity component" << std::endl;
         return;
     } 
 
     // Move horizontally if uninhibited by other collidable objects
-    if (keyboard[SDL_SCANCODE_LEFT] && transform->m_rect.x >= Player::maxDX) {
+    if (keyboard[SDL_SCANCODE_LEFT] && (transform->m_rect.x >= Player::maxDX)) {
         velocity->dx = -Player::maxDX;
     }
+
     else if (keyboard[SDL_SCANCODE_RIGHT] && transform->m_rect.x + transform->m_rect.w <= World::levelWidth - Player::maxDX) {
         velocity->dx = Player::maxDX;
     }
@@ -149,44 +151,34 @@ void CollisionSystem::Update() {
     quadTree.Update();
     leafNodes = quadTree.GetLeafNodes();
 
-    std::shared_ptr<CCollisionState> coll = nullptr;
     std::shared_ptr<CLanded> land = nullptr;
 
     for (Entity e = 0; e < collisionEntities.size(); e++) {
 
-        coll = entityManager.GetComponent<CCollisionState>(e, ComponentID::cCollisionState);
-        land = entityManager.GetComponent<CLanded>(e, ComponentID::cLanded);
-
-        coll->isCollidingLeft = false;
-        coll->isCollidingRight = false;
-        coll->isCollidingUp = false;
-        coll->isCollidingDown = false;
-        coll->horCollWith.clear();
-        coll->vertCollWith.clear();
-
         velocities[e] = entityManager.GetComponent<CVelocity>(e, ComponentID::cVelocity);
 
+        land = entityManager.GetComponent<CLanded>(e, ComponentID::cLanded);
         if (land)
             land->m_hasLanded = false;
     } 
-
  
     collidingPairs = BroadPass();
 
     if (collidingPairs.size() > 0) {
-        CheckVerticalCollisions();
+        std::vector<CollisionSystem::EntityPair> vertCollidingPairs = CheckVerticalCollisions(collidingPairs);
         
-        if (anyVertCollisions)
-            ResolveVerticalCollisions();
+        if (!vertCollidingPairs.empty()) {
+            ResolveVerticalCollisions(vertCollidingPairs);
+        }
     }
     
     collidingPairs = BroadPass();
 
-    if (collidingPairs.size() > 0) {
-        CheckHorizontalCollisions();
-
-        if (anyHorCollisions)
-            ResolveHorizontalCollisions();
+    if (!collidingPairs.empty()) {
+        std::vector<CollisionSystem::EntityPair> horCollidingPairs = CheckHorizontalCollisions(collidingPairs);
+        if (horCollidingPairs.size() > 0) {
+            ResolveHorizontalCollisions(horCollidingPairs);
+        }
     } 
 }
 
@@ -229,15 +221,12 @@ std::vector<CollisionSystem::EntityPair> CollisionSystem::BroadPass() {
 }
 
 
-void CollisionSystem::CheckVerticalCollisions() {
+std::vector<CollisionSystem::EntityPair> CollisionSystem::CheckVerticalCollisions(std::vector<EntityPair>& collidingPairs) {
 
-    anyVertCollisions = false;
+    std::vector<CollisionSystem::EntityPair> vertCollidingPairs = {};
     
-    std::shared_ptr<CCollisionState> coll1 = nullptr;
-    std::shared_ptr<CCollisionState> coll2 = nullptr;
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
-    std::shared_ptr<CVelocity> vel = nullptr;
 
     // Do a triangular loop
     for (auto &node : leafNodes) {
@@ -249,7 +238,6 @@ void CollisionSystem::CheckVerticalCollisions() {
             if (!entitiesInNode[i]) 
                 continue;
             
-            coll1 = entityManager.GetComponent<CCollisionState>(entitiesInNode[i], ComponentID::cCollisionState);
             tran1 = entityManager.GetComponent<CTransform>(entitiesInNode[i], ComponentID::cTransform);
 
             for (int j = i + 1; j < entitiesInNode.size(); j++) {
@@ -257,52 +245,36 @@ void CollisionSystem::CheckVerticalCollisions() {
                 if (!entitiesInNode[j]) 
                     continue;
                     
-                coll2 = entityManager.GetComponent<CCollisionState>(entitiesInNode[j], ComponentID::cCollisionState);
                 tran2 = entityManager.GetComponent<CTransform>(entitiesInNode[j], ComponentID::cTransform);
 
                 const SDL_Rect rect1 = tran1->m_rect;
                 const SDL_Rect rect2 = tran2->m_rect;
 
-                // If the 2 rectangles don't collide, move on
-                if (!(SDL_HasIntersection(&rect1, &rect2)))
-                    continue;
-
                 // Check collision direction
                 bool a = (rect1.y < rect2.y && rect1.y + rect1.h > rect2.y); // i on top, j on bottom
                 bool b = (rect2.y < rect1.y && rect2.y + rect2.h > rect1.y); // i on bottom, j on top
 
-                if ((a || b) && !anyVertCollisions)
-                    anyVertCollisions = true;
-
+                // i on top, j on bottom
                 if (a) {
-
-                    coll1->isCollidingDown = true;
-                    coll2->isCollidingUp = true;
-
-                    coll1->vertCollWith.insert({entitiesInNode[j], Direction::Down});
-                    coll2->vertCollWith.insert({entitiesInNode[i], Direction::Up});
+                    CollisionSystem::EntityPair newPair = {entitiesInNode[i], entitiesInNode[j]};
+                    vertCollidingPairs.emplace_back(newPair);
                 }
 
+                // j on top, i on bottom
                 else if (b) {
-
-                    coll1->isCollidingUp = true;
-                    coll2->isCollidingDown = true;
-
-                    coll1->vertCollWith.insert({entitiesInNode[j], Direction::Up});
-                    coll2->vertCollWith.insert({entitiesInNode[i], Direction::Down});
+                    CollisionSystem::EntityPair newPair = {entitiesInNode[j], entitiesInNode[i]};
+                    vertCollidingPairs.emplace_back(newPair);
                 }
             }
         }
     }
+    return vertCollidingPairs;
 }
 
 
-void CollisionSystem::CheckHorizontalCollisions() {
+std::vector<CollisionSystem::EntityPair> CollisionSystem::CheckHorizontalCollisions(std::vector<EntityPair>& collidingPairs) {
 
-    anyHorCollisions = false;
-
-    std::shared_ptr<CCollisionState> coll1 = nullptr;
-    std::shared_ptr<CCollisionState> coll2 = nullptr;
+    std::vector<CollisionSystem::EntityPair> horCollidingPairs {};
     std::shared_ptr<CTransform> tran1 = nullptr;
     std::shared_ptr<CTransform> tran2 = nullptr;
     
@@ -316,7 +288,6 @@ void CollisionSystem::CheckHorizontalCollisions() {
             if (!entitiesInNode[i])
                 continue;
 
-            coll1 = entityManager.GetComponent<CCollisionState>(entitiesInNode[i], ComponentID::cCollisionState);
             tran1 = entityManager.GetComponent<CTransform>(entitiesInNode[i], ComponentID::cTransform);
 
             for (int j = i + 1; j < entitiesInNode.size(); j++) {
@@ -324,178 +295,147 @@ void CollisionSystem::CheckHorizontalCollisions() {
                 if (!entitiesInNode[j])
                     continue;
                 
-                coll2 = entityManager.GetComponent<CCollisionState>(entitiesInNode[j], ComponentID::cCollisionState);
                 tran2 = entityManager.GetComponent<CTransform>(entitiesInNode[j], ComponentID::cTransform);
 
                 const SDL_Rect rect1 = tran1->m_rect;
                 const SDL_Rect rect2 = tran2->m_rect;
 
-                // If the 2 rectangles don't collide, move on
-                if (!(SDL_HasIntersection(&rect1, &rect2)))
-                    continue;
-
-                // Work out whether there is horizontal collision
                 bool a = (rect1.x < rect2.x && rect1.x + rect1.w > rect2.x); // i on left, j on right
-                bool b = (rect2.x < rect1.x && rect2.x + rect2.w > rect1.x); // i on right, j on left 
+                bool b = (rect2.x < rect1.x && rect2.x + rect2.w > rect1.x); // i on right, j on left
 
-                if ((a || b) && !anyHorCollisions)
-                    anyHorCollisions = true;
-
+                // i on left, j on right
                 if (a) {
-
-                    coll1->isCollidingRight = true;
-                    coll2->isCollidingLeft = true;
-
-                    coll1->horCollWith.insert({entitiesInNode[j], Direction::Right});
-                    coll2->horCollWith.insert({entitiesInNode[i], Direction::Left});
-                }
-
+                    CollisionSystem::EntityPair newPair = {entitiesInNode[i], entitiesInNode[j]};
+                    horCollidingPairs.emplace_back(newPair);
+                } 
+                
+                // j on left, i on right
                 else if (b) {
-
-                    coll1->isCollidingLeft = true;
-                    coll2->isCollidingRight = true;
-
-                    coll1->horCollWith.insert({entitiesInNode[j], Direction::Left});
-                    coll2->horCollWith.insert({entitiesInNode[i], Direction::Right});
+                    CollisionSystem::EntityPair newPair = {entitiesInNode[j], entitiesInNode[i]};
+                    horCollidingPairs.emplace_back(newPair);
                 }
             }
         }
     }
+    return horCollidingPairs;
 }
 
 
-void CollisionSystem::ResolveHorizontalCollisions() {
+void CollisionSystem::ResolveHorizontalCollisions(std::vector<EntityPair>& collidingPairs) {
 
     std::shared_ptr<CTransform> leftTran = nullptr;
     std::shared_ptr<CTransform> rightTran = nullptr;
 
     // Move the object out of the way
-    for (int i = 0; i < collisionEntities.size(); i++) {
+    for (auto &pair : collidingPairs) {
 
-        std::unordered_map<Entity, Direction> horColls = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState)->horCollWith;
+        Entity left = pair.e1;
+        Entity right = pair.e2;
 
-        // For each entity that Entity i is colliding with
-        for (auto &ent : horColls) {
+        leftTran = entityManager.GetComponent<CTransform>(left, ComponentID::cTransform);
+        rightTran = entityManager.GetComponent<CTransform>(right, ComponentID::cTransform);
 
-            Entity left = (ent.second == Direction::Right) ? i : ent.first;
-            Entity right = (left == i) ? ent.first : i;
+        // Fixed objects may not have a velocity component
+        if (!velocities[right]) {    // Left object moving
+            velocities[left]->dx = 0;
+            leftTran->m_rect.x = rightTran->m_rect.x - leftTran->m_rect.w;
+        }
+        else if (!velocities[left]) {
+            velocities[right]->dx = 0;
+            rightTran->m_rect.x = leftTran->m_rect.x + leftTran->m_rect.w;
+        }
 
-            leftTran = entityManager.GetComponent<CTransform>(left, ComponentID::cTransform);
-            rightTran = entityManager.GetComponent<CTransform>(right, ComponentID::cTransform);
+        // No object moving left - glue left transform to right, set left dx to right dx
+        else if (velocities[left]->dx > 0 && velocities[right]->dx >= 0) {
+            leftTran->m_rect.x = rightTran->m_rect.x - leftTran->m_rect.w;
+            velocities[left]->dx = velocities[right]->dx;
+        }
 
-            // Fixed objects may not have a velocity component
-            if (!velocities[right]) {    // Left object moving
-                velocities[left]->dx = 0;
-                leftTran->m_rect.x = rightTran->m_rect.x - leftTran->m_rect.w;
+        // No object moving right - glue right transform to left, set right dx to left dx 
+        else if (velocities[right]->dx < 0 && velocities[left]->dx <= 0) {
+
+            rightTran->m_rect.x = leftTran->m_rect.x + leftTran->m_rect.w;
+            velocities[right]->dx = velocities[left]->dx;
+        }
+
+        // Both objects moving towards each other
+        else if (velocities[left]->dx > 0 && velocities[right]->dx < 0) {
+            
+            velocities[left]->dx = 0;
+            velocities[right]->dx = 0;
+
+            // Move each object apart by half of the overlap
+            int xDiff = leftTran->m_rect.x + leftTran->m_rect.w - rightTran->m_rect.x;
+
+            // Add 1 to get the right separation if xDiff is odd
+            if (xDiff % 2 != 0) {
+                xDiff += 1;
             }
-            else if (!velocities[left]) {
-                velocities[right]->dx = 0;
-                rightTran->m_rect.x = leftTran->m_rect.x + leftTran->m_rect.w;
-            }
 
-            // No object moving left - glue left transform to right, set left dx to right dx
-            else if (velocities[left]->dx > 0 && velocities[right]->dx >= 0) {
-                leftTran->m_rect.x = rightTran->m_rect.x - leftTran->m_rect.w;
-                velocities[left]->dx = velocities[right]->dx;
-            }
-
-            // No object moving right - glue right transform to left, set right dx to left dx 
-            else if (velocities[right]->dx < 0 && velocities[left]->dx <= 0) {
-
-                rightTran->m_rect.x = leftTran->m_rect.x + leftTran->m_rect.w;
-                velocities[right]->dx = velocities[left]->dx;
-            }
-
-            // Both objects moving towards each other
-            else if (velocities[left]->dx > 0 && velocities[right]->dx < 0) {
-                
-                velocities[left]->dx = 0;
-                velocities[right]->dx = 0;
-
-                // Move each object apart by half of the overlap
-                int xDiff = leftTran->m_rect.x + leftTran->m_rect.w - rightTran->m_rect.x;
-
-                // Add 1 to get the right separation if xDiff is odd
-                if (xDiff % 2 != 0) {
-                    xDiff += 1;
-                }
-
-                leftTran->m_rect.x -= (xDiff / 2);
-                rightTran->m_rect.x += (xDiff / 2);
-            }
+            leftTran->m_rect.x -= (xDiff / 2);
+            rightTran->m_rect.x += (xDiff / 2);
         }
     }
 }
 
 
-
-void CollisionSystem::ResolveVerticalCollisions() {
+void CollisionSystem::ResolveVerticalCollisions(std::vector<EntityPair>& collidingPairs) {
 
     std::shared_ptr<CTransform> topTran = nullptr;
     std::shared_ptr<CTransform> bottomTran = nullptr;
 
     // Move the object out of the way
-    for (int i = 0; i < collisionEntities.size(); i++) {
+    for (auto &pair : collidingPairs) {
 
-        if (collisionEntities[i] && velocities[i]) {
+        Entity top = pair.e1;
+        Entity bottom = pair.e2;
 
-            std::unordered_map<Entity, Direction> vertColls = entityManager.GetComponent<CCollisionState>(collisionEntities[i], ComponentID::cCollisionState)->vertCollWith;
-            
-            // For each entity that Entity i is colliding with
-            for (auto &ent : vertColls) {
+        topTran = entityManager.GetComponent<CTransform>(top, ComponentID::cTransform);
+        bottomTran = entityManager.GetComponent<CTransform>(bottom, ComponentID::cTransform);
 
-                Entity top = (ent.second == Direction::Down) ? i : ent.first;
-                Entity bottom = (top == i) ? ent.first : i;
+        std::shared_ptr<CLanded> land = entityManager.GetComponent<CLanded>(top, ComponentID::cLanded);
 
-                topTran = entityManager.GetComponent<CTransform>(top, ComponentID::cTransform);
-                bottomTran = entityManager.GetComponent<CTransform>(bottom, ComponentID::cTransform);
+        // Falling object landed (if it has a landed component)
+        if (land)
+            land->m_hasLanded = true;
 
-                std::shared_ptr<CLanded> land = entityManager.GetComponent<CLanded>(top, ComponentID::cLanded);
+        // Fixed objects may not have a velocity component
+        if (!velocities[bottom]) {
+            velocities[top]->dy = 0;
+            topTran->m_rect.y = bottomTran->m_rect.y - topTran->m_rect.h;
+        }
+        else if (!velocities[top]) {
+            velocities[bottom]->dy = 0;
+            bottomTran->m_rect.y = topTran->m_rect.y + topTran->m_rect.h;
+        }
 
-                // Falling object landed (if it has a landed component)
-                if (land) {
-                    land->m_hasLanded = true;
-                }
+        // Top object moving faster than bottom object (means moving down)
+        else if (velocities[top]->dy > velocities[bottom]->dy) {
+            topTran->m_rect.y = bottomTran->m_rect.y - topTran->m_rect.h;
+            velocities[top]->dy = velocities[bottom]->dy;
+        }
 
-                // Fixed objects may not have a velocity component
-                if (!velocities[bottom]) {
-                    velocities[top]->dy = 0;
-                    topTran->m_rect.y = bottomTran->m_rect.y - topTran->m_rect.h;
-                }
-                else if (!velocities[top]) {
-                    velocities[bottom]->dy = 0;
-                    bottomTran->m_rect.y = topTran->m_rect.y + topTran->m_rect.h;
-                }
+        // Bottom object moving faster upwards (more negatively, given since they collide) than top object
+        else if (velocities[bottom]->dy < velocities[top]->dy) {
+            bottomTran->m_rect.y = topTran->m_rect.y + topTran->m_rect.h;
+            velocities[bottom]->dy = velocities[top]->dy;
+        }
 
-                // Top object moving faster than bottom object (means moving down)
-                else if (velocities[top]->dy > velocities[bottom]->dy) {
-                    topTran->m_rect.y = bottomTran->m_rect.y - topTran->m_rect.h;
-                    velocities[top]->dy = velocities[bottom]->dy;
-                }
+        // Both objects moving towards each other
+        else if (velocities[top]->dy > 0 && velocities[bottom]->dy < 0) {
+            velocities[top]->dy = 0;
+            velocities[bottom]->dy = 0;
 
-                // Bottom object moving faster upwards (more negatively, given since they collide) than top object
-                else if (velocities[bottom]->dy < velocities[top]->dy) {
-                    bottomTran->m_rect.y = topTran->m_rect.y + topTran->m_rect.h;
-                    velocities[bottom]->dy = velocities[top]->dy;
-                }
+            // Move each object apart by half of the overlap
+            int yDiff = topTran->m_rect.y + topTran->m_rect.h - bottomTran->m_rect.y;
 
-                // Both objects moving towards each other
-                else if (velocities[top]->dy > 0 && velocities[bottom]->dy < 0) {
-                    velocities[top]->dy = 0;
-                    velocities[bottom]->dy = 0;
-
-                    // Move each object apart by half of the overlap
-                    int yDiff = topTran->m_rect.y + topTran->m_rect.h - bottomTran->m_rect.y;
-
-                    // Add 1 to get the right separation if xDiff is odd
-                    if (yDiff % 2 != 0) {
-                        yDiff += 1;
-                    }
-
-                    topTran->m_rect.y -= (yDiff / 2);
-                    bottomTran->m_rect.y += (yDiff / 2);
-                }
+            // Add 1 to get the right separation if xDiff is odd
+            if (yDiff % 2 != 0) {
+                yDiff += 1;
             }
+
+            topTran->m_rect.y -= (yDiff / 2);
+            bottomTran->m_rect.y += (yDiff / 2);
         }
     }
 }

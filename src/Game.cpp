@@ -20,9 +20,9 @@ void Game::LoadPlayer() {
     entityManager.SetPlayerEntity(e);
 
     CTransform transform(Player::width * 2, Player::height , Player::width, Player::height);
-    CCollisionState collision(true);
+    CCollisionState collision(true, true);
     CSpritesheet spritesheet(filenameIdx::beetle, 4, 144, 39, Direction::Right, Direction::Left, 5);
-    CVelocity velocity(true, 0, 0);
+    CVelocity velocity(0, 0);
     CLanded landed(false);
 
     entityManager.AddComponent(e, transform);
@@ -59,15 +59,15 @@ void Game::LoadTilemap() {
 
                     // Create the tile with Transform, Spritesheet, and Collision components
                     CTransform transform(x, y, World::TileDim, World::TileDim);
-                    CCollisionState collision(false);
+                    CCollisionState collision(false, true);
 
                     int spritesheetID = currentLine[i] - '0' + 2;
                     
                     CSpritesheet spritesheet(currentLine[i] - '0' + 2, 1, 18, 18);
 
-                    entityManager.AddComponent<CTransform>(e, transform);
-                    entityManager.AddComponent<CCollisionState>(e, collision);
-                    entityManager.AddComponent<CSpritesheet>(e, spritesheet);
+                    entityManager.AddComponent(e, transform);
+                    entityManager.AddComponent(e, collision);
+                    entityManager.AddComponent(e, spritesheet);
                 }
             }
             y += World::TileDim;
@@ -104,8 +104,8 @@ void Game::GameLoop() {
         Entity e = entityManager.CreateEntity();
         
         CTransform transform(tranX, tranY, Player::width / 8, Player::height / 8);
-        CCollisionState collision(true);
-        CVelocity velocity(false, 1, 0);
+        CCollisionState collision(true, true);
+        CVelocity velocity(1, 0);
         CSpritesheet spritesheet(filenameIdx::coin, 3, 48, 16, Direction::Right, Direction::Left, 20);
 
         entityManager.AddComponent(e, transform);
@@ -145,7 +145,7 @@ void Game::GameLoop() {
 
         int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
         // std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
-
+        
         if (frameEnd - frameStart < World::DesiredFrameTicks) {
             SDL_Delay(World::DesiredFrameTicks - (frameEnd - frameStart));
         }

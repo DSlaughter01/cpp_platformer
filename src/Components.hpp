@@ -27,21 +27,21 @@ struct Component {
 
 struct CTag : public Component {
 
-    CTag(short int tag) : 
+    CTag(uint16_t tag) : 
         Component(ComponentID::cTag), m_tag(tag) {}
-    short int m_tag;
+    uint16_t m_tag;
 };
 
 
 struct CSpritesheet : public Component {
 
-    CSpritesheet(int spritesheetID, 
-                 int noImages, 
-                 int spritesheetWidth, 
-                 int spritesheetHeight, 
+    CSpritesheet(uint16_t spritesheetID, 
+                 uint16_t noImages, 
+                 uint16_t spritesheetWidth, 
+                 uint16_t spritesheetHeight, 
                  std::optional<Direction> dir = std::nullopt, 
                  std::optional<Direction> originalDir = std::nullopt, 
-                 std::optional<int> frameDuration = std::nullopt) :
+                 std::optional<uint16_t> frameDuration = std::nullopt) :
 
         Component(ComponentID::cSpritesheet), 
         m_spritesheetID(spritesheetID),
@@ -61,27 +61,27 @@ struct CSpritesheet : public Component {
         }
 
     // Basic spritesheet info      
-    int m_spritesheetID; 
-    int m_noImages;
-    int m_spritesheetWidth;
+    uint16_t m_spritesheetID; 
+    uint16_t m_noImages;
+    uint16_t m_spritesheetWidth;
 
     // Frame info
-    short int m_framesSinceSpawn;
-    short int m_maxFrames;
-    int m_currentImageX;
-    std::optional<int> m_frameDuration;
+    int16_t m_framesSinceSpawn;
+    int16_t m_maxFrames;
+    uint16_t m_currentImageX;
+    std::optional<uint16_t> m_frameDuration;
 
     // Current direction facing - use Direction enum
     std::optional<Direction> m_dir;
     std::optional<Direction> m_originalDir;
 
-    int m_imageWidth;
-    int m_imageHeight;
+    uint16_t m_imageWidth;
+    uint16_t m_imageHeight;
 };
 
 struct CTransform : public Component {
 
-    CTransform(int x, int y, int w, int h) :
+    CTransform(uint16_t x, uint16_t y, uint16_t w, uint16_t h) :
         Component(ComponentID::cTransform) {
             m_rect = {x, y, w, h};
             rotation = 0;
@@ -90,27 +90,25 @@ struct CTransform : public Component {
         }
 
     SDL_Rect m_rect;
-    int right;
-    int bottom;
-    int rotation;
+    uint16_t right;
+    uint16_t bottom;
+    uint16_t rotation;
 };
 
 struct CVelocity : public Component {
 
-    bool m_canAccelerate;   // If false then may still move but at constant speed
+    int16_t dx;
+    int16_t dy;
 
-    int dx;
-    int dy;
-
-    CVelocity(bool canAccelerate, int x, int y) :
-        Component(ComponentID::cVelocity), dx(x), dy(y), m_canAccelerate(canAccelerate) {}
+    CVelocity(int16_t x, int16_t y) :
+        Component(ComponentID::cVelocity), dx(x), dy(y) {}
 };
 
 struct CHealth : public Component {
 
-    int m_health;
+    uint16_t m_health;
 
-    CHealth(int h) : 
+    CHealth(uint16_t h) : 
         Component(ComponentID::cHealth), m_health(h) {}
 };
 
@@ -125,23 +123,11 @@ struct CIsAlive : public Component {
 struct CCollisionState : public Component {
 
     bool dynamic;
+    bool solid;
 
-    bool isCollidingUp;
-    bool isCollidingDown; 
-    bool isCollidingLeft;
-    bool isCollidingRight;
-
-    std::unordered_map<Entity, Direction> horCollWith;
-    std::unordered_map<Entity, Direction> vertCollWith;
-
-    CCollisionState(bool dyn) :
+    CCollisionState(bool dyn, bool sol) :
         Component(ComponentID::cCollisionState),
-        dynamic(dyn),
-        isCollidingUp(false), isCollidingDown(false),
-        isCollidingLeft(false), isCollidingRight(false) {
-            horCollWith.clear();
-            vertCollWith.clear();
-        }
+        dynamic(dyn), solid(sol) {}
 };
 
 struct CLanded : public Component {

@@ -47,8 +47,7 @@ bool QuadTreeNode::CheckIsLeaf() const {
 
 
 bool QuadTreeNode::CheckEntityPresence(Entity e) const {
-    auto it = std::find(entities.begin(), entities.end(), e);
-    return (it != entities.end()) ? true : false;
+    return (std::find(entities.begin(), entities.end(), e) != entities.end()) ? true : false;
 }
 
 bool QuadTreeNode::NeedsSubdivision() {  
