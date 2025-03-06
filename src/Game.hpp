@@ -11,11 +11,12 @@ class Game {
         Game();
         ~Game();
 
-        void GameLoop();
+        void RunGame();
 
     private: 
         void LoadTilemap();
         void LoadPlayer();
+        void LoadLevel();
 
     public:
 

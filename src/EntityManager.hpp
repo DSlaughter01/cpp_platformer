@@ -24,28 +24,28 @@ using BinaryKey = uint32_t;
 class EntityManager {
 
     private:
-        Entity playerEntity;
+        Entity playerEntity = World::InvalidEntity;
 
         // A queue of entities that are not already in the game
-        std::queue<Entity> availableEntityIDs;
+        std::queue<Entity> availableEntityIDs {};
 
         // True if an entity is present, false if not
-        std::bitset<World::MaxEntities> m_entities;
+        std::bitset<World::MaxEntities> m_entities {};
 
         // Maps an entity to a vector of its components - the key is a pair of Entity, componentID (short int)
-        std::unordered_map<BinaryKey, std::shared_ptr<Component>> entityComponentMap;
+        std::unordered_map<BinaryKey, std::shared_ptr<Component>> entityComponentMap {};
 
         // The bitsets signifying the presence (or not) of each component in active entities
-        std::unordered_map<Entity, std::bitset<World::MaxComponents>> m_entityComponentBitset;
+        std::unordered_map<Entity, std::bitset<World::MaxComponents>> m_entityComponentBitset {};
 
         // Entities that get passed to a system
-        std::vector<Entity> renderEntities;
-        std::vector<Entity> collisionEntities;
-        std::vector<Entity> moveEntities;
+        std::vector<Entity> renderEntities {};
+        std::vector<Entity> collisionEntities {};
+        std::vector<Entity> moveEntities {};
 
         // These 2 are to be passed to the QuadTree's update function
-        std::vector<Entity> newCollisionEntities;
-        std::vector<Entity> removedCollisionEntities;
+        std::vector<Entity> newCollisionEntities {};
+        std::vector<Entity> removedCollisionEntities {};
 
     public:
 

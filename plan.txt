@@ -1,20 +1,53 @@
-TODO NEXT
-Optimise quadtree update
-Change vertical and horizontal collision detection to only act on collidingPairs
+What happens, in what order, and how it could be improved
 
-Resolve collision bug when the player collides simultaneously horizontally and vertically
-Implement a more efficient way of doing collision detection
-Add coins and maybe a solid aspect (to collision component?)
-Scoring system 
-Enemies
-Asset handler
+The Game object is created by the main function
 
-General Comments:
-1\ File EntityManager.cpp function GetComponent. It would be good to be able to add multiple components at the same time
+During initialisation of the Game class, the GUI is created
+The GUI requires as input a vector of textureFilenames
+Potential problems:
+    (1) const correctness of the textureFilenames
+    (2) the vector is hardcoded - in this case it could be an array of fixed size, if the GUI allowed for that
+    (3) It could be good to traverse the assets directory and load everything into the vector. How would this work, and how would the textures then be accessed?
+    (4) The filenameIdx enum is weird because it is separate from the vector
+    (5) These are both also in the Game class. Could this be rearranged so that it is either in a separate file i.e. a texture manager, or just in the GUI class? Don't see any reason why it should be in the game class as it is uniquely used during initialisation, although I suppose the textures are used as well in the components 
 
-2\ File Game.cpp function GameLoop. Combine LoadPlayer and LoadTilemap and maybe some other info into a LoadGame or LoadLevel function
+An entityManager and a systemManager are also created
 
-3\ The flipping of sprites assumes that they are all facing the same way. May need to set a starting direction and then see whether m_dir is different in order to flip or not
+When the GUI is initialised
 
-4\ Collision detection:
-Assuming for the moment that fixed objects do not have a velocity component, but will come back to that later because it is not robust
+Potential problems:
+    (1) m_textureFilenames is set to textureFilenames (see point (5) above)
+    (2) Textures are loaded into a vector. Reserve is good, but maybe this could be a map. What would the keys be?
+    (3) backgroundDest and middleDest are set, but are the same. Do I really need both? This means that in RenderBackground() and SetBackMidRenderTimes (an AWFUL name) there is repetition
+    (4) There should probably be a LoadLevel() function, because it seems like a bad idea to set backgroundDest and middleDest in the constructor. In this case, probably the textureFilenames would be passed as an argument here, and not in the constructor.
+
+An entityManager is also created
+Potential improvement: Is it possible to reserve space in a queue?
+
+The systemManager is created
+Is this a good design to pass the entityManager between all of the different systems?
+
+Systems are bolted onto the systemManager. Each is a different version of the System
+Questions and potential issues
+(1) The RenderSystem has a textureArray - how is this linked to the GUI, and is there a simpler way to do this?
+    The textureArray is updated every frame, which is weird (???)
+    It is also an array of size World::maxTextures so is different from the GUI's version by default
+    The systemManager gets passed to the GUI as an argument, but then the textures get passed back to the systemManager (unchanged from the last time) 
+    BUT textureArray is NEVER USED OR ASSIGNED so space is wasted for nothing. 
+    Maybe I was looking for some performance gains by using an array instead of a vector, but this needs to be sorted
+(2) The CollisionSystem looks like it will be trouble and way too complicated but the initialisation is broadly fine.
+    When looking at the CollisionSystem maybe it would be a good idea to start small (simplifying the QuadNode class) then move up to the QuadTree and then to the CollisionSystem
+
+QuadTree is created on top of CollisionSystem
+(1) The argument for the depth is currently hardcoded as 10, but this is almost certainly not good - nee to look as rules of thumb and how to actually set this
+(2) Need to look later whether every part of the class is necessary - see point (2) above
+
+Then we enter into RunGame()
+frameStart, end, and an event are created. OK.
+The level is loaded:
+    The tilemap is loaded, objects placed in their correct positions, and then World::levelWidth updated
+    (1) At the moment, "src/level1.txt" is passed as the file. Could probably proceed as follows:
+        - Move each level.txt file to a separate directory, and rename them as 1.txt, 2.txt, etc.
+        - Pass the level number as a parameter to LoadTilemap (probably to LoadLevel too)
+        - Open the right file depending on the level number
+    (2) 

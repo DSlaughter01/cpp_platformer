@@ -20,6 +20,7 @@ class QuadTree {
         std::shared_ptr<QuadTreeNode> root;
         std::vector<std::shared_ptr<QuadTreeNode>> leafNodes;
         std::unordered_map<Entity, std::vector<std::shared_ptr<QuadTreeNode>>> entityNodeMap;
+        std::bitset<World::MaxComponents> entitiesInTree;
 
     public:
         QuadTree(EntityManager &em, int maxD);
@@ -31,7 +32,8 @@ class QuadTree {
         int GetMaxDepth() {return maxDepth;}
         std::vector<std::shared_ptr<QuadTreeNode>> GetLeafNodes() {return leafNodes;}
 
-        void Update();
+        void CreateDeleteEntities(std::vector<Entity>& createdEntities, std::vector<Entity> &deletedEntities);
+        void Update(std::vector<Entity>& createdEntities, std::vector<Entity> &deletedEntities, std::vector<Entity> &collisionEntities);
 
     private:
 

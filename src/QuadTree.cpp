@@ -1,7 +1,13 @@
 #include "QuadTree.hpp"
 
+
+/* IMPROVEMENTS
+Lots of binary search going on, could improve with a 1-operation algorithm or more suitable data structure. Maybe a bitset or similar to check presence, or change the map entirely
+It is also confusing that RemoveEntity and curr->RemoveEntity both exist
+*/
+
 QuadTree::QuadTree(EntityManager &em, int maxD) :
-    entityManager(em), leafNodeCount(1), maxDepth(maxD), entityNodeMap({}), leafNodes({}) {}
+    entityManager(em), leafNodeCount(1), maxDepth(maxD), entityNodeMap({}), leafNodes({}), entitiesInTree(0ULL) {}
 
 
 void QuadTree::Init(int rootWidth, int rootHeight, int maxEntsPerNode) {
@@ -12,9 +18,6 @@ void QuadTree::Init(int rootWidth, int rootHeight, int maxEntsPerNode) {
     root = std::make_shared<QuadTreeNode>(boundingBox, 0, maxDepth, maxEntsPerNode);
 
     leafNodes.reserve(std::pow(maxEntsPerNode, maxDepth) / 2);
-
-    // Creates the initial tree
-    Update();
 }
 
 
@@ -89,24 +92,19 @@ void QuadTree::Merge(std::shared_ptr<QuadTreeNode> &parent) {
 
 bool QuadTree::Subdivide(std::shared_ptr<QuadTreeNode> &curr) {
 
-    if (!curr->NeedsSubdivision()) {
+    if (!curr->NeedsSubdivision())
         return false;
-    }
 
     leafNodeCount += 3; // current node is no longer a leaf, but create 4 more nodes by subdividing => 3
     
     // Create a rectangle with 1/2 width and 1/2 height
     SDL_Rect boundingBox = curr->GetBoundingBox();
-    int originalX = boundingBox.x;
-    int originalY = boundingBox.y;
-    int newWidth = boundingBox.w / 2;
-    int newHeight = boundingBox.h / 2;
 
     // Assign 1 rectangle to each quadrant
-    SDL_Rect topLeftBB = {originalX, originalY, newWidth, newHeight};
-    SDL_Rect topRightBB = {originalX + newWidth, originalY, newWidth, newHeight};
-    SDL_Rect bottomLeftBB = {originalX, originalY + newHeight, newWidth, newHeight};
-    SDL_Rect bottomRightBB = {originalX + newWidth, originalY + newHeight, newWidth, newHeight};
+    SDL_Rect topLeftBB = {boundingBox.x, boundingBox.y, boundingBox.w / 2, boundingBox.h};
+    SDL_Rect topRightBB = {boundingBox.x + boundingBox.w / 2, boundingBox.y, boundingBox.w / 2, boundingBox.h};
+    SDL_Rect bottomLeftBB = {boundingBox.x, boundingBox.y + boundingBox.h, boundingBox.w / 2, boundingBox.h};
+    SDL_Rect bottomRightBB = {boundingBox.x + boundingBox.w / 2, boundingBox.y + boundingBox.h, boundingBox.w / 2, boundingBox.h};
 
     // Create new nodes
     int depth = curr->GetDepth();
@@ -123,7 +121,6 @@ bool QuadTree::Subdivide(std::shared_ptr<QuadTreeNode> &curr) {
     }
 
     curr->SetChildNodes(newChildren);
-
 
     // Redistribute and clear the current node's entities
     for (auto& e : curr->GetEntities()) {
@@ -191,7 +188,7 @@ void QuadTree::InsertEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
             // This usually happens when the tree has reached max depth and cannot subdivide, so stores more entities than normal
             else {
                 curr->InsertEntity(e);
-                if (entityNodeMap.find(e) != entityNodeMap.end()) {
+                if (entitiesInTree[e]) {
                     entityNodeMap[e].emplace_back(curr);
                 }
             }
@@ -218,33 +215,34 @@ void QuadTree::RemoveEntity(std::shared_ptr<QuadTreeNode> &curr, Entity e) {
 
     else {
         for (auto &child : curr->GetChildNodes())
-            RemoveEntity(child, e); // Confusing that RemoveEntity and curr->RemoveEntity both exist?
+            RemoveEntity(child, e);
     }
 }
 
 
-void QuadTree::Update() {
-
-    std::vector<Entity> collisionEntities = entityManager.GetCollisionEntities();
-    std::vector<Entity> createdEntities = entityManager.GetNewCollisionEntities();
-    std::vector<Entity> deletedEntities = entityManager.GetRemovedCollisionEntities();
-
+void QuadTree::CreateDeleteEntities(std::vector<Entity>& createdEntities, std::vector<Entity> &deletedEntities) {
     // Created entities need to be inserted into the right part of the tree
     for (int i = 0; i < createdEntities.size(); i++) {
-        if (entityNodeMap.find(createdEntities[i]) == entityNodeMap.end())
+        if (entitiesInTree[createdEntities[i]])
             entityNodeMap.insert({createdEntities[i], {}});
         InsertEntity(root, createdEntities[i]);
     }
 
     // Entities that are no longer active should be removed from the tree
     for (int i = 0; i < deletedEntities.size(); i++) {
-        if (entityNodeMap.find(deletedEntities[i]) != entityNodeMap.end())
+        if (entitiesInTree[createdEntities[i]])
             entityNodeMap.erase(deletedEntities[i]);
         RemoveEntity(root, deletedEntities[i]); 
     } 
 
     // Once the created and deleted entities have been processed, clear so they don't keep getting passed to the Update method
     entityManager.ResetCollisionEntityChanges();
+}
+
+
+void QuadTree::Update(std::vector<Entity>& createdEntities, std::vector<Entity> &deletedEntities, std::vector<Entity> &collisionEntities) {
+
+    CreateDeleteEntities(createdEntities, deletedEntities);
 
     std::shared_ptr<CCollisionState> coll = nullptr;
     std::shared_ptr<CTransform> tran = nullptr;

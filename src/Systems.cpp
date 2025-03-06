@@ -147,8 +147,11 @@ void InputSystem::Update(const Uint8* keyboard) {
 void CollisionSystem::Update() {
 
     collisionEntities = entityManager.GetCollisionEntities();
-  
-    quadTree.Update();
+
+    std::vector<Entity> createdEntities = entityManager.GetNewCollisionEntities();
+    std::vector<Entity> deletedEntities = entityManager.GetRemovedCollisionEntities();
+
+    quadTree.Update(createdEntities, deletedEntities, collisionEntities);
     leafNodes = quadTree.GetLeafNodes();
 
     std::shared_ptr<CLanded> land = nullptr;

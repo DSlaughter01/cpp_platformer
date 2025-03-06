@@ -1,8 +1,10 @@
 #pragma once
-#include "EntityManager.hpp"
 #include <map>
-#include "Variables.hpp"
+
 #include "SDL2/SDL.h"
+
+#include "EntityManager.hpp"
+#include "Variables.hpp"
 #include "QuadTree.hpp"
 
 class System {

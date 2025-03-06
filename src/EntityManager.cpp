@@ -1,27 +1,11 @@
 #include "EntityManager.hpp"
 #include "Variables.hpp"
 
-EntityManager::EntityManager() :
-    playerEntity(World::InvalidEntity) {
+EntityManager::EntityManager() {
 
     // Initialise availableEntityIDs
-    availableEntityIDs = {};
     for (Entity e = 0; e < World::MaxEntities; e++) 
         availableEntityIDs.push(e);
-
-    // Initialise m_entities
-    m_entities.reset();
-
-    // Reset entityComponentMap and entityComponentBitset
-    entityComponentMap.clear();
-    m_entityComponentBitset.clear();
-
-    // System entity vectors
-    renderEntities.clear();
-    moveEntities.clear();
-    collisionEntities.clear();
-    newCollisionEntities.clear();
-    removedCollisionEntities.clear();
 }
 
 

@@ -3,6 +3,6 @@
 int main(int argc, char** args) {
     
     Game game;
-    game.GameLoop();
+    game.RunGame();
     return 0;
 }
