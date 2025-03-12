@@ -42,7 +42,7 @@ namespace World {
     constexpr uint16_t DesiredFrameTicks = 1000 / FPS;
 
     // Entities
-    constexpr Entity MaxEntities = 1024;
+    constexpr Entity MaxEntities = 1000;
     constexpr uint16_t MaxComponents = 32;
     constexpr std::bitset<World::MaxEntities> EmptyEntityBitset {};
     constexpr std::bitset<World::MaxComponents> EmptyComponentBitset {};

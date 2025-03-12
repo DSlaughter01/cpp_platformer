@@ -75,6 +75,7 @@ void Game::LoadTilemap() {
             line++;
         }
     }
+    
     else {
         std::cerr << "Error in Game::LoadTilemap(): Could not open file. Please check filename." << std::endl;
         return;
@@ -83,44 +84,29 @@ void Game::LoadTilemap() {
     World::levelWidth = x + levelWidth;
     World::levelHeight = y + World::TileDim;
 
-    systemManager.InitQuadTree(World::levelWidth, World::levelHeight, 4);
-    gui.SetBackMidRenderTimes(levelWidth);
     tilemapFile.close();
 }
 
 
-void Game::GameLoop() {
-
-    SDL_Event event;
-    uint64_t frameStart, frameEnd;
+void Game::LoadLevel() {
 
     LoadTilemap();
     LoadPlayer();
 
+    systemManager.InitQuadTree(World::levelWidth, World::levelHeight, 4);
+    gui.SetBackMidRenderTimes(World::levelWidth);
+}
+
+
+void Game::RunGame() {
+
+    SDL_Event event;
+    uint64_t frameStart, frameEnd;
+
+    LoadLevel();
+
     int tranX = 0;
     int tranY = 0;
-    
-    for (int i = 0; i < World::MaxEntities - 100; i++) {
-
-        Entity e = entityManager.CreateEntity();
-        
-        CTransform transform(tranX, tranY, Player::width / 8, Player::height / 8);
-        CCollisionState collision(true, true);
-        CVelocity velocity(1, 0);
-        CSpritesheet spritesheet(filenameIdx::coin, 3, 48, 16, Direction::Right, Direction::Left, 20);
-
-        entityManager.AddComponent(e, transform);
-        entityManager.AddComponent(e, collision);
-        entityManager.AddComponent(e, spritesheet);
-        entityManager.AddComponent(e, velocity);
-
-        tranX += 8;
-
-        if (tranX > World::levelWidth / 2) {
-            tranX = 0;
-            tranY += 8;
-        }
-    }
 
     int xOffset = 0;
 
@@ -144,7 +130,7 @@ void Game::GameLoop() {
         // Control frame rate
         frameEnd = SDL_GetTicks64();
 
-        int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
+        // int percentage = 100 * (frameEnd - frameStart) / World::DesiredFrameTicks;
         // std::cout << "This frame took " << percentage << "% of the desired number of ticks" << std::endl;
         
         if (frameEnd - frameStart < World::DesiredFrameTicks) {

@@ -1,5 +1,4 @@
 #pragma once
-#include "EntityManager.hpp"
 #include <map>
 #include "Variables.hpp"
 #include "SDL.h"
