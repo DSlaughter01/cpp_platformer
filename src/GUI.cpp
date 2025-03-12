@@ -72,8 +72,15 @@ void GUI::LoadTextures() {
 
     for (int i = 0; i < m_textureFilenames.size(); i++) {            
         
-        SDL_Surface* imgSurf = IMG_Load(m_textureFilenames[i].c_str());
+        SDL_Surface* imgSurf = IMG_Load(m_textureFilenames.at(i).c_str());
         SDL_Texture* imgTex = SDL_CreateTextureFromSurface(renderer, imgSurf);
+
+        if (!imgTex)
+            std::cerr << "Big probs" << std::endl;
+
+        if (!imgSurf)
+            std::cerr << "uh-ohhhhh" << std::endl;
+
         SDL_FreeSurface(imgSurf);
 
         textureVector[i] = imgTex;
@@ -97,7 +104,7 @@ void GUI::RenderBackground(int &xOffset) {
         backgroundDest.x - xOffset + i * backgroundDest.w;
         SDL_RenderCopy(renderer, backgroundTex, NULL, &backgroundDest);
     }
-
+    
     for (int i = 0; i < midRenderTimes; i++) {
         middleDest.x - xOffset + i * middleDest.w;
         SDL_RenderCopy(renderer, middleTex, NULL, &middleDest);

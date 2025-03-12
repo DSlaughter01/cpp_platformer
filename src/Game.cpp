@@ -35,10 +35,11 @@ void Game::LoadPlayer() {
 
 void Game::LoadTilemap() {
 
+    std::string levelFilePath =  std::string(PROJECT_ROOT) + "src/level2.txt";
     std::fstream tilemapFile;
     std::string currentLine;
 
-    tilemapFile.open("src/level1.txt");
+    tilemapFile.open("../src/level1.txt");
     int line = 0;
     int levelWidth = 0;
     int x = 0;
@@ -75,7 +76,7 @@ void Game::LoadTilemap() {
         }
     }
     else {
-        std::cerr << "Could node open file. Please check filename." << std::endl;
+        std::cerr << "Error in Game::LoadTilemap(): Could not open file. Please check filename." << std::endl;
         return;
     }
 

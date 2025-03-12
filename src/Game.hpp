@@ -20,12 +20,12 @@ class Game {
     public:
 
         std::vector<std::string> textureFilenames = {
-            "assets/back.png",
-            "assets/middle.png",
-            "assets/spritesheets/sprite_still.png",
-            "assets/tiles/alone_floor.png",
-            "assets/tiles/coin.png",
-            "assets/spritesheets/beetle.png",
+            std::string(PROJECT_ROOT) + "/assets/back.png",
+            std::string(PROJECT_ROOT) + "/assets/middle.png",
+            std::string(PROJECT_ROOT) + "/assets/spritesheets/sprite_still.png",
+            std::string(PROJECT_ROOT) + "/assets/tiles/alone_floor.png",
+            std::string(PROJECT_ROOT) + "/assets/tiles/coin.png",
+            std::string(PROJECT_ROOT) + "/assets/spritesheets/beetle.png",
         };
 
         enum filenameIdx {back, middle, spriteStill, aloneFloor, coin, beetle};

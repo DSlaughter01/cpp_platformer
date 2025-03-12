@@ -2,7 +2,7 @@
 #include "EntityManager.hpp"
 #include <map>
 #include "Variables.hpp"
-#include "SDL2/SDL.h"
+#include "SDL.h"
 #include "QuadTree.hpp"
 
 class System {

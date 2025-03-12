@@ -1,10 +1,11 @@
-#include "SDL2/SDL.h"
+#include "SDL.h"
 #include "Variables.hpp"
 #include <vector>
 #include <array>
 #include <memory>
 #include <algorithm>
 #include <iostream>
+
 // Represents a node on the QuadTree, containing a limited number of entities before subdividing, and having 0 or 4 child nodes
 class QuadTreeNode {
 

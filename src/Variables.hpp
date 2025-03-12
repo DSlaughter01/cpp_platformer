@@ -4,6 +4,9 @@
 
 using Entity = int16_t;
 
+// Using CMake so define root directory
+#define PROJECT_ROOT PROJECT_ROOT_DIR
+
 namespace Player {
 
     inline uint16_t width = 64;
