@@ -1,7 +1,7 @@
 #include "GUI.hpp"
 #include <iostream>
 
-GUI::GUI(std::vector<std::string> &textureFilenames) :
+GUI::GUI() :
     windowWidth(World::WindowWidth), windowHeight(World::WindowHeight),
     backRenderTimes(0), midRenderTimes(0) {
 
@@ -34,9 +34,6 @@ GUI::GUI(std::vector<std::string> &textureFilenames) :
         return;
     }
 
-    m_textureFilenames = textureFilenames;
-
-    LoadTextures();
     backgroundDest = {0, 0, windowWidth, windowHeight};
     middleDest = {0, 0, windowWidth, windowHeight};
 }
@@ -66,20 +63,20 @@ GUI::~GUI() {
 }
 
 
-void GUI::LoadTextures() {
+void GUI::LoadLevel(const std::vector<std::string> &textureFilenames, int levelWidth) {
 
+    m_textureFilenames = textureFilenames;
+
+    backRenderTimes = std::ceil((float) levelWidth / (float) backgroundDest.w);
+    midRenderTimes = std::ceil((float) levelWidth / (float) middleDest.w);
+
+    textureVector.clear();
     textureVector.reserve(m_textureFilenames.size());
 
     for (int i = 0; i < m_textureFilenames.size(); i++) {            
         
         SDL_Surface* imgSurf = IMG_Load(m_textureFilenames.at(i).c_str());
         SDL_Texture* imgTex = SDL_CreateTextureFromSurface(renderer, imgSurf);
-
-        if (!imgTex)
-            std::cerr << "Big probs" << std::endl;
-
-        if (!imgSurf)
-            std::cerr << "uh-ohhhhh" << std::endl;
 
         SDL_FreeSurface(imgSurf);
 
@@ -88,13 +85,6 @@ void GUI::LoadTextures() {
 
     backgroundTex = textureVector[backImgIdx];
     middleTex = textureVector[middleImgIdx];
-}
-
-
-void GUI::SetBackMidRenderTimes(int levelWidth) {
-
-    backRenderTimes = std::ceil((float) levelWidth / (float) backgroundDest.w);
-    midRenderTimes = std::ceil((float) levelWidth / (float) middleDest.w);
 }
 
 

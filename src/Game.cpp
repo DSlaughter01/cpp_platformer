@@ -2,7 +2,7 @@
 #include <iostream>
 
 Game::Game() :
-    isRunning(true), gui(textureFilenames) {
+    isRunning(true) {
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) 
         std::cerr << "Problem initialising SDL: " << SDL_GetError() << std::endl;
@@ -94,7 +94,7 @@ void Game::LoadLevel() {
     LoadPlayer();
 
     systemManager.InitQuadTree(World::levelWidth, World::levelHeight, 4);
-    gui.SetBackMidRenderTimes(World::levelWidth);
+    gui.LoadLevel(textureFilenames, World::levelWidth);
 }
 
 

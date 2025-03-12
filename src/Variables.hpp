@@ -24,7 +24,7 @@ enum Direction {None, Left, Right, Up, Down};
 
 namespace World {
 
-    inline int16_t gravity = 0;
+    inline int16_t gravity = 1;
 
     // Dimensions - currently does not allow for window resizing
     constexpr uint16_t WindowHeight = 640;

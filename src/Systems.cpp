@@ -168,6 +168,7 @@ void CollisionSystem::Update() {
     collidingPairs = BroadPass();
 
     if (collidingPairs.size() > 0) {
+
         std::vector<CollisionSystem::EntityPair> vertCollidingPairs = CheckVerticalCollisions(collidingPairs);
         
         if (!vertCollidingPairs.empty()) {

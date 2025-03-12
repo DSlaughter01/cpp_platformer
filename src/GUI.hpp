@@ -11,14 +11,13 @@ class GUI {
 
     public:
 
-        GUI() = default;
-        GUI(std::vector<std::string> &textureFilenames);
+        GUI();;
         ~GUI();
-        void LoadTextures();
+
+        void LoadLevel(const std::vector<std::string> &textureFilenames, int levelWidth);
         void RenderScreen(SystemManager &systemManager, int &xOffset);
         void RenderBackground(int &xOffset);
         int GetWindowWidth() {return windowWidth;}
-        void SetBackMidRenderTimes(int levelWidth);
 
     private:
 
