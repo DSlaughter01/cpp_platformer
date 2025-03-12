@@ -1,5 +1,16 @@
 This C++ project uses Entities, Components, and Systems to create a data-driven approach to creating a platformer game.
 
+## Building
+In order to build and run the code, change the directory to the root directory, then type the following commands in the terminal
+
+    mkdir build && cd build
+    cmake ../
+    cmake --build .
+
+Then to run the executable, type
+
+    ./Platformer
+
 ## Overview
 Each Entity is represented as an int16_t, and is essentially an index used to access a game item's specific components, contained within the EntityManager's entityComponentMap. 
 
