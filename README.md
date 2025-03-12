@@ -1,13 +1,14 @@
 This C++ project uses Entities, Components, and Systems to create a data-driven approach to creating a platformer game.
 
 ## Building
-In order to build and run the code, change the directory to the root directory, then type the following commands in the terminal
+In order to build and run the code with CMake, change the directory to the root directory, then run the following commands in the terminal:
 
-    mkdir build && cd build
+    mkdir build
+    cd build
     cmake ../
     cmake --build .
 
-Then to run the executable, type
+Then to run the executable, run:
 
     ./Platformer
 
